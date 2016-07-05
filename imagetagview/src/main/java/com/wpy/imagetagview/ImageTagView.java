@@ -45,19 +45,20 @@ public class ImageTagView extends View {
 
     private int mCircleRadius = 6;//圆形的半径
     private int mCircleColor = Color.WHITE;
-    private int mCircleColorAlpha = 60;
+    private int mOutCircleColorAlpha = 60;
+    private int mOutCircleRadiusFactor = 2;//外部圆形半径是内部的几倍
 
     private int lineColor = Color.WHITE;
     private int lineWidth = 24;//横线的长度
-    private int lineHeight = 2;//线条的大小
+    private int lineStrokeWidth = 2;//线条的大小
     private int lineRadiusWidth = 4;//横竖两条线中间弧度的半径
 
     private float textSize = 14;
     private int textColor = Color.WHITE;
 
-    private int padding = 6;//文字和标签图形之间的间距
-    private int textLinePadding = 6;//两行文字之间的间距
-    private float spacingadd = 9f;//换行间距
+    private int textLinePadding = 6;//文字和标签图形之间的间距
+    private int textLineSpacing = 6;//两行文字之间的间距
+    private float textSpacingAdd = 9f;//换行间距
 
     private float mCenterX, mCenterY;//圆点的中心位置
 
@@ -106,11 +107,11 @@ public class ImageTagView extends View {
 
         mCircleRadius = dp2px(getContext(), mCircleRadius);
         lineWidth = dp2px(getContext(), lineWidth);
-        lineHeight = dp2px(getContext(), lineHeight);
+        lineStrokeWidth = dp2px(getContext(), lineStrokeWidth);
         lineRadiusWidth = dp2px(getContext(), lineRadiusWidth);
         textSize = sp2px(getContext(), textSize);
-        padding = dp2px(getContext(), padding);
         textLinePadding = dp2px(getContext(), textLinePadding);
+        textLineSpacing = dp2px(getContext(), textLineSpacing);
     }
 
     @Override
@@ -135,9 +136,9 @@ public class ImageTagView extends View {
     private int getTextMaxWidth() {
         int maxWidth;
         if (mCenterX <= mTagViewRect.exactCenterX()) {
-            maxWidth = (int) (getMeasuredWidth() - mCenterX - lineWidth - lineRadiusWidth - padding);
+            maxWidth = (int) (getMeasuredWidth() - mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
         } else {
-            maxWidth = (int) (mCenterX - lineWidth - lineRadiusWidth - padding);
+            maxWidth = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
         }
         return maxWidth;
     }
@@ -151,7 +152,7 @@ public class ImageTagView extends View {
         for (int i = 0; i < mTagTexts.size(); i++) {
             mStaticLayouts[i] = new StaticLayout(mTagTexts.get(i), mTextPaint, mTextMaxWidth,
                     isDirectionLeft() ? Layout.Alignment.ALIGN_OPPOSITE : Layout.Alignment.ALIGN_NORMAL,
-                    1.0f, spacingadd, false);
+                    1.0f, textSpacingAdd, false);
             mTextHeights[i] = mStaticLayouts[i].getHeight();
 //            mTextWidths[i] = mStaticLayouts[i].getWidth();//注：这个返回的是设置的最大宽度
             Log.d(TAG, "addStaticLayout: mTextHeights[" + i + "] = " + mTextHeights[i]);
@@ -180,16 +181,17 @@ public class ImageTagView extends View {
      * 对中心点进行边界检测
      */
     private void checkCenterBorder() {
-        if (mCenterX - mCircleRadius < mTagViewRect.left) {
-            mCenterX = mCenterX + mCircleRadius;
-        } else if (mCenterX + mCircleRadius > mTagViewRect.right) {
-            mCenterX = mCenterX - mCircleRadius;
+        int radius = mCircleRadius * mOutCircleRadiusFactor;
+        if (mCenterX - radius < mTagViewRect.left) {
+            mCenterX = mCenterX + radius;
+        } else if (mCenterX + radius > mTagViewRect.right) {
+            mCenterX = mCenterX - radius;
         }
 
-        if (mCenterY - mCircleRadius < mTagViewRect.top) {
-            mCenterY = mCenterY + mCircleRadius;
-        } else if (mCenterY + mCircleRadius > mTagViewRect.bottom) {
-            mCenterY = mCenterY - mCircleRadius;
+        if (mCenterY - radius < mTagViewRect.top) {
+            mCenterY = mCenterY + radius;
+        } else if (mCenterY + radius > mTagViewRect.bottom) {
+            mCenterY = mCenterY - radius;
         }
     }
 
@@ -230,17 +232,17 @@ public class ImageTagView extends View {
             //绘制圆形
             mCirclePaint.setColor(mCircleColor);
             canvas.drawCircle(mCenterX, mCenterY, mCircleRadius, mCirclePaint);
-            mCirclePaint.setAlpha(mCircleColorAlpha);
-            canvas.drawCircle(mCenterX, mCenterY, mCircleRadius * 2, mCirclePaint);
+            mCirclePaint.setAlpha(mOutCircleColorAlpha);
+            canvas.drawCircle(mCenterX, mCenterY, mCircleRadius * mOutCircleRadiusFactor, mCirclePaint);
 
             //圆点范围坐标
-            mCircleRect.left = (int) (mCenterX - mCircleRadius * 2);
-            mCircleRect.top = (int) (mCenterY - mCircleRadius * 2);
-            mCircleRect.right = (int) (mCenterX + mCircleRadius * 2);
-            mCircleRect.bottom = (int) (mCenterY + mCircleRadius * 2);
+            mCircleRect.left = (int) (mCenterX - mCircleRadius * mOutCircleRadiusFactor);
+            mCircleRect.top = (int) (mCenterY - mCircleRadius * mOutCircleRadiusFactor);
+            mCircleRect.right = (int) (mCenterX + mCircleRadius * mOutCircleRadiusFactor);
+            mCircleRect.bottom = (int) (mCenterY + mCircleRadius * mOutCircleRadiusFactor);
 
             //绘制线条
-            mLinePaint.setStrokeWidth(lineHeight);
+            mLinePaint.setStrokeWidth(lineStrokeWidth);
             mLinePaint.setColor(lineColor);
             canvas.drawPath(getLinePath(), mLinePaint);
 
@@ -260,80 +262,80 @@ public class ImageTagView extends View {
         switch (mCurrentType) {
             case TYPE_ONE_LEFT:
                 canvas.save();
-                canvas.translate(mCenterX - lineWidth - mTextMaxWidth - padding, mCenterY - mCircleRadius);
+                canvas.translate(mCenterX - lineWidth - mTextMaxWidth - textLinePadding, mCenterY - mCircleRadius);
                 mStaticLayouts[0].draw(canvas);
                 canvas.restore();
 
-                mTagTextRect.left = (int) (mCenterX - lineWidth - mTextWidths[0] - padding);
+                mTagTextRect.left = (int) (mCenterX - lineWidth - mTextWidths[0] - textLinePadding);
                 mTagTextRect.top = (int) (mCenterY - mCircleRadius);
-                mTagTextRect.right = (int) (mCenterX - lineWidth - padding);
+                mTagTextRect.right = (int) (mCenterX - lineWidth - textLinePadding);
                 mTagTextRect.bottom = (int) (mCenterY - mCircleRadius + mTextHeights[0]);
                 break;
             case TYPE_ONE_RIGHT:
                 canvas.save();
-                canvas.translate(mCenterX + lineWidth + padding, mCenterY - mCircleRadius);
+                canvas.translate(mCenterX + lineWidth + textLinePadding, mCenterY - mCircleRadius);
                 mStaticLayouts[0].draw(canvas);
                 canvas.restore();
 
-                mTagTextRect.left = (int) (mCenterX + lineWidth + padding);
+                mTagTextRect.left = (int) (mCenterX + lineWidth + textLinePadding);
                 mTagTextRect.top = (int) (mCenterY - mCircleRadius);
-                mTagTextRect.right = (int) (mCenterX + lineWidth + padding + mTextWidths[0]);
+                mTagTextRect.right = (int) (mCenterX + lineWidth + textLinePadding + mTextWidths[0]);
                 mTagTextRect.bottom = (int) (mCenterY - mCircleRadius + mTextHeights[0]);
                 break;
             case TYPE_MORE_LEFT_TOP:
                 for (int i = 0; i < mStaticLayouts.length; i++) {
                     canvas.save();
-                    canvas.translate(mCenterX - lineWidth - lineRadiusWidth - mTextMaxWidth - padding,
+                    canvas.translate(mCenterX - lineWidth - lineRadiusWidth - mTextMaxWidth - textLinePadding,
                             mCenterY - lineRadiusWidth - getTotalTextHeight() + getTextY(i));
                     mStaticLayouts[i].draw(canvas);
                     canvas.restore();
                 }
 
-                mTagTextRect.left = (int) (mCenterX - lineWidth - lineRadiusWidth - padding - getMaxLineWidth());
+                mTagTextRect.left = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding - getMaxLineWidth());
                 mTagTextRect.top = (int) (mCenterY - lineRadiusWidth - getTotalTextHeight());
-                mTagTextRect.right = (int) (mCenterX - lineWidth - lineRadiusWidth - padding);
+                mTagTextRect.right = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
                 mTagTextRect.bottom = (int) mCenterY;
                 break;
             case TYPE_MORE_LEFT_BOTTOM:
                 for (int i = 0; i < mStaticLayouts.length; i++) {
                     canvas.save();
-                    canvas.translate(mCenterX - lineWidth - lineRadiusWidth - padding - mTextMaxWidth,
+                    canvas.translate(mCenterX - lineWidth - lineRadiusWidth - textLinePadding - mTextMaxWidth,
                             mCenterY + getTextY(i));
                     mStaticLayouts[i].draw(canvas);
                     canvas.restore();
                 }
 
-                mTagTextRect.left = (int) (mCenterX - lineWidth - lineRadiusWidth - padding - getMaxLineWidth());
+                mTagTextRect.left = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding - getMaxLineWidth());
                 mTagTextRect.top = (int) mCenterY;
-                mTagTextRect.right = (int) (mCenterX - lineWidth - lineRadiusWidth - padding);
+                mTagTextRect.right = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
                 mTagTextRect.bottom = (int) (mCenterY + lineRadiusWidth + getTotalTextHeight());
                 break;
             case TYPE_MORE_RIGHT_TOP:
                 for (int i = 0; i < mStaticLayouts.length; i++) {
                     canvas.save();
-                    canvas.translate(mCenterX + lineWidth + lineRadiusWidth + padding,
+                    canvas.translate(mCenterX + lineWidth + lineRadiusWidth + textLinePadding,
                             mCenterY - lineRadiusWidth - getTotalTextHeight() + getTextY(i));
                     mStaticLayouts[i].draw(canvas);
                     canvas.restore();
                 }
 
-                mTagTextRect.left = (int) (mCenterX + lineWidth + lineRadiusWidth + padding);
+                mTagTextRect.left = (int) (mCenterX + lineWidth + lineRadiusWidth + textLinePadding);
                 mTagTextRect.top = (int) (mCenterY - lineRadiusWidth - getTotalTextHeight());
-                mTagTextRect.right = (int) (mCenterX + lineWidth + lineRadiusWidth + padding + getMaxLineWidth());
+                mTagTextRect.right = (int) (mCenterX + lineWidth + lineRadiusWidth + textLinePadding + getMaxLineWidth());
                 mTagTextRect.bottom = (int) mCenterY;
                 break;
             case TYPE_MORE_RIGHT_BOTTOM:
                 for (int i = 0; i < mStaticLayouts.length; i++) {
                     canvas.save();
-                    canvas.translate(mCenterX + lineWidth + lineRadiusWidth + padding,
+                    canvas.translate(mCenterX + lineWidth + lineRadiusWidth + textLinePadding,
                             mCenterY + lineRadiusWidth + getTextY(i));
                     mStaticLayouts[i].draw(canvas);
                     canvas.restore();
                 }
 
-                mTagTextRect.left = (int) (mCenterX + lineWidth + lineRadiusWidth + padding);
+                mTagTextRect.left = (int) (mCenterX + lineWidth + lineRadiusWidth + textLinePadding);
                 mTagTextRect.top = (int) mCenterY;
-                mTagTextRect.right = (int) (mCenterX + lineWidth + lineRadiusWidth + padding + getMaxLineWidth());
+                mTagTextRect.right = (int) (mCenterX + lineWidth + lineRadiusWidth + textLinePadding + getMaxLineWidth());
                 mTagTextRect.bottom = (int) (mCenterY + lineRadiusWidth + getTotalTextHeight());
                 break;
         }
@@ -344,9 +346,9 @@ public class ImageTagView extends View {
      */
     private int getMaxLineWidth() {
         int maxLineWidth = 0;
-        for (int i = 0; i < mTextWidths.length; i++) {
-            if (mTextWidths[i] > maxLineWidth) {
-                maxLineWidth = mTextWidths[i];
+        for (int mTextWidth : mTextWidths) {
+            if (mTextWidth > maxLineWidth) {
+                maxLineWidth = mTextWidth;
             }
         }
         return maxLineWidth;
@@ -439,10 +441,10 @@ public class ImageTagView extends View {
      */
     private int getTotalTextHeight() {
         int mTotalTextHeight = 0;
-        for (int i = 0; i < mTextHeights.length; i++) {
-            mTotalTextHeight = mTotalTextHeight + mTextHeights[i];
+        for (int mTextHeight : mTextHeights) {
+            mTotalTextHeight = mTotalTextHeight + mTextHeight;
         }
-        mTotalTextHeight = mTotalTextHeight + (mTagTexts.size() - 1) * textLinePadding;
+        mTotalTextHeight = mTotalTextHeight + (mTagTexts.size() - 1) * textLineSpacing;
         return mTotalTextHeight;
     }
 
@@ -455,7 +457,7 @@ public class ImageTagView extends View {
         int y = 0;
         if (currentText > 0) {
             for (int i = 0; i < currentText; i++) {
-                y = y + mTextHeights[i] + textLinePadding;
+                y = y + mTextHeights[i] + textLineSpacing;
             }
         }
         return y;
