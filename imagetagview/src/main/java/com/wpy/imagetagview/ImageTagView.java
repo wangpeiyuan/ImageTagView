@@ -612,6 +612,13 @@ public class ImageTagView extends View {
         postInvalidate();
     }
 
+    public void updateTag(List<String> tagTexts) {
+        mCurrentType = TYPE_NONE;
+        setTagTexts(tagTexts);
+        requestLayout();
+        postInvalidate();
+    }
+
     public float getCenterX() {
         return mCenterX;
     }
