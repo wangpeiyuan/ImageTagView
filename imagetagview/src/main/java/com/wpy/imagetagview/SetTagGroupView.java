@@ -17,15 +17,15 @@ public class SetTagGroupView extends FrameLayout {
 
     private static final String TAG = "SetTagGroupView";
 
-    private GestureDetector mGestureDetector;
+    protected GestureDetector mGestureDetector;
 
-    private List<ImageTagView> mTagSetViews = new ArrayList<>();
+    protected List<ImageTagView> mTagSetViews = new ArrayList<>();
 
-    private ImageTagView mCurrentTagView = null;
+    protected ImageTagView mCurrentTagView = null;
 
-    private boolean canTouch = true;
+    protected boolean canTouch = true;
 
-    private TagClickListener mTagClickListener;
+    protected TagClickListener mTagClickListener;
 
     public SetTagGroupView(Context context) {
         this(context, null);
@@ -61,15 +61,12 @@ public class SetTagGroupView extends FrameLayout {
         this.mTagClickListener = clickListener;
     }
 
-    private void addTagTest(float x, float y) {
-        List<String> strings = new ArrayList<>();
-//        strings.add("之前做过一个图上标签但是动画样式不太好看");
-        strings.add("经过查找资料发现了一种");
-//        strings.add("PathMeasure");
-        final ImageTagView tagSetView = new ImageTagView(getContext());
-        addView(tagSetView);
-        tagSetView.addTags(x, y, strings);
-        mTagSetViews.add(tagSetView);
+    public void addTag(float x, float y, List<String> tagText) {
+        if (tagText == null || tagText.isEmpty()) return;
+        ImageTagView imageTagView = new ImageTagView(getContext());
+        imageTagView.addTags(x, y, tagText);
+        addView(imageTagView);
+        mTagSetViews.add(imageTagView);
     }
 
     public class TagGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -97,17 +94,19 @@ public class SetTagGroupView extends FrameLayout {
             float x = e.getX();
             float y = e.getY();
             Log.d(TAG, "onSingleTapUp: e.getX() = " + x + " e.getY() = " + y);
-            if (mCurrentTagView == null && mTagClickListener != null) {
+            if (mCurrentTagView == null) {
                 //添加
-                mTagClickListener.onClick(x, y);
-            } else if (mCurrentTagView != null &&
-                    mCurrentTagView.isCenterClick((int) x, (int) y)) {
+                if (mTagClickListener != null) {
+                    mTagClickListener.onClick(x, y);
+                }
+            } else if (mCurrentTagView.isCenterClick((int) x, (int) y)) {
+                //变换类型
                 mCurrentTagView.changeType(mCurrentTagView.getCanChangeType());
-            } else if (mCurrentTagView != null &&
-                    mCurrentTagView.isContentTextClick((int) x, (int) y) &&
-                    mTagClickListener != null) {
+            } else if (mCurrentTagView.isContentTextClick((int) x, (int) y)) {
                 //编辑
-                mTagClickListener.onTagEditClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
+                if (mTagClickListener != null) {
+                    mTagClickListener.onTagEditClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
+                }
             }
             return true;
         }
@@ -126,9 +125,11 @@ public class SetTagGroupView extends FrameLayout {
         @Override
         public void onLongPress(MotionEvent e) {
             //删除选中的 view
-            if (mCurrentTagView != null && mTagClickListener != null) {
+            if (mCurrentTagView != null) {
                 Log.d(TAG, "onLongPress: ");
-                mTagClickListener.onLongTagClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
+                if (mTagClickListener != null) {
+                    mTagClickListener.onLongTagClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
+                }
             }
         }
     }
