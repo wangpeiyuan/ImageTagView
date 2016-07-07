@@ -23,6 +23,10 @@ public class SetTagGroupView extends FrameLayout {
 
     private ImageTagView mCurrentTagView = null;
 
+    private boolean canTouch = true;
+
+    private TagClickListener mTagClickListener;
+
     public SetTagGroupView(Context context) {
         this(context, null);
     }
@@ -42,7 +46,19 @@ public class SetTagGroupView extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return mGestureDetector.onTouchEvent(event);
+        if (canTouch) {
+            return mGestureDetector.onTouchEvent(event);
+        } else {
+            return super.onTouchEvent(event);
+        }
+    }
+
+    public void setCanTouch(boolean canTouch) {
+        this.canTouch = canTouch;
+    }
+
+    public void setTagClickListener(TagClickListener clickListener) {
+        this.mTagClickListener = clickListener;
     }
 
     private void addTagTest(float x, float y) {
@@ -81,14 +97,17 @@ public class SetTagGroupView extends FrameLayout {
             float x = e.getX();
             float y = e.getY();
             Log.d(TAG, "onSingleTapUp: e.getX() = " + x + " e.getY() = " + y);
-            if (mCurrentTagView == null) {
+            if (mCurrentTagView == null && mTagClickListener != null) {
                 //添加
-                addTagTest(x, y);
-            } else if (mCurrentTagView.isCenterClick((int) x, (int) y)) {
-                //TODO 变换  注  顺时针变换  检测能变换的类型
+                mTagClickListener.onClick(x, y);
+            } else if (mCurrentTagView != null &&
+                    mCurrentTagView.isCenterClick((int) x, (int) y)) {
                 mCurrentTagView.changeType(mCurrentTagView.getCanChangeType());
-            } else if (mCurrentTagView.isContentTextClick((int) x, (int) y)) {
+            } else if (mCurrentTagView != null &&
+                    mCurrentTagView.isContentTextClick((int) x, (int) y) &&
+                    mTagClickListener != null) {
                 //编辑
+                mTagClickListener.onTagEditClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
             }
             return true;
         }
@@ -107,8 +126,9 @@ public class SetTagGroupView extends FrameLayout {
         @Override
         public void onLongPress(MotionEvent e) {
             //删除选中的 view
-            if (mCurrentTagView != null) {
+            if (mCurrentTagView != null && mTagClickListener != null) {
                 Log.d(TAG, "onLongPress: ");
+                mTagClickListener.onLongTagClick(mTagSetViews.indexOf(mCurrentTagView), mCurrentTagView);
             }
         }
     }
