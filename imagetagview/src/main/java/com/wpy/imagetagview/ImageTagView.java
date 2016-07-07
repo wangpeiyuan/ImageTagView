@@ -338,6 +338,8 @@ public class ImageTagView extends View {
                 mTagTextRect.right = (int) (mCenterX + lineWidth + lineRadiusWidth + textLinePadding + getMaxLineWidth());
                 mTagTextRect.bottom = (int) (mCenterY + lineRadiusWidth + getTotalTextHeight());
                 break;
+            default:
+                break;
         }
     }
 
@@ -432,6 +434,8 @@ public class ImageTagView extends View {
 
                 path.lineTo(mCenterX + lineWidth + lineRadiusWidth, mCenterY + lineRadiusWidth + getTotalTextHeight());
                 break;
+            default:
+                break;
         }
         return path;
     }
@@ -469,6 +473,7 @@ public class ImageTagView extends View {
 
     private void setTagTexts(List<String> tagTexts) {
         this.mTagTexts = tagTexts;
+        Log.d(TAG, "setTagTexts: mTagTexts.size = " + mTagTexts.size());
         if (isTagsEmpty()) return;
         mStaticLayouts = new StaticLayout[tagTexts.size()];
         mTextHeights = new int[tagTexts.size()];
@@ -491,12 +496,12 @@ public class ImageTagView extends View {
         float distanceX = centerX - mCenterX;
         float distanceY = centerY - mCenterY;
 
-        Rect ciclrRectTemp = copyRect(mCircleRect);
+        Rect circleRectTemp = copyRect(mCircleRect);
 
-        ciclrRectTemp.left = (int) (ciclrRectTemp.left + distanceX);
-        ciclrRectTemp.top = (int) (ciclrRectTemp.top + distanceY);
-        ciclrRectTemp.right = (int) (ciclrRectTemp.right + distanceX);
-        ciclrRectTemp.bottom = (int) (ciclrRectTemp.bottom + distanceY);
+        circleRectTemp.left = (int) (circleRectTemp.left + distanceX);
+        circleRectTemp.top = (int) (circleRectTemp.top + distanceY);
+        circleRectTemp.right = (int) (circleRectTemp.right + distanceX);
+        circleRectTemp.bottom = (int) (circleRectTemp.bottom + distanceY);
 
         Rect textRectTemp = copyRect(mTagTextRect);
 
@@ -505,7 +510,7 @@ public class ImageTagView extends View {
         textRectTemp.right = (int) (textRectTemp.right + distanceX);
         textRectTemp.bottom = (int) (textRectTemp.bottom + distanceY);
 
-        return mTagViewRect.contains(ciclrRectTemp) &&
+        return mTagViewRect.contains(circleRectTemp) &&
                 mTagViewRect.contains(textRectTemp);
     }
 
@@ -573,6 +578,8 @@ public class ImageTagView extends View {
                     type = TYPE_MORE_RIGHT_TOP;
                 }
                 break;
+            default:
+                break;
         }
         return type;
     }
@@ -592,20 +599,16 @@ public class ImageTagView extends View {
         return mTagTextRect.contains(x, y);
     }
 
-    public void addTags(float centerX, float centerY, List<String> texts) {
-        mCurrentType = TYPE_NONE;
-        this.mCenterX = centerX;
-        this.mCenterY = centerY;
-        Log.d(TAG, "addTags: mCenterX = " + mCenterX + " mCenterY = " + mCenterY);
-        setTagTexts(texts);
-        postInvalidate();
+    public void addTags(float centerX, float centerY, List<String> tagTexts) {
+        addTags(centerX, centerY, tagTexts, TYPE_NONE);
     }
 
-    public void addTags(float centerX, float centerY, List<String> texts, int type) {
+    public void addTags(float centerX, float centerY, List<String> tagTexts, int type) {
         mCurrentType = type;
         this.mCenterX = centerX;
         this.mCenterY = centerY;
-        setTagTexts(texts);
+        Log.d(TAG, "addTags: mCenterX = " + mCenterX + " mCenterY = " + mCenterY);
+        setTagTexts(tagTexts);
         postInvalidate();
     }
 
@@ -617,6 +620,9 @@ public class ImageTagView extends View {
         return mCenterY;
     }
 
+    public int getType() {
+        return mCurrentType;
+    }
 
     public static int dp2px(Context context, float dpValue) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dpValue, context.getResources().getDisplayMetrics());
