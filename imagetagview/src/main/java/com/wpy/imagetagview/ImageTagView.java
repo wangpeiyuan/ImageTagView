@@ -43,17 +43,17 @@ public class ImageTagView extends View {
     private Paint mLinePaint;
     private TextPaint mTextPaint;
 
-    private int mCircleRadius = 6;//圆形的半径
+    private int mCircleRadius = 4;//圆形的半径
     private int mCircleColor = Color.WHITE;
     private int mOutCircleColorAlpha = 60;
     private int mOutCircleRadiusFactor = 2;//外部圆形半径是内部的几倍
 
     private int lineColor = Color.WHITE;
     private int lineWidth = 24;//横线的长度
-    private int lineStrokeWidth = 2;//线条的大小
+    private int lineStrokeWidth = 1;//线条的大小
     private int lineRadiusWidth = 4;//横竖两条线中间弧度的半径
 
-    private float textSize = 14;
+    private float textSize = 12;
     private int textColor = Color.WHITE;
 
     private int textLinePadding = 6;//文字和标签图形之间的间距
