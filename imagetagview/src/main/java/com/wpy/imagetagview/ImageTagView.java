@@ -63,6 +63,7 @@ public class ImageTagView extends View {
     private float mCenterX, mCenterY;//圆点的中心位置
 
     private int mTextMaxWidth;//文字最大能设置宽度
+    private int mMinWidth = 24;
 
     private StaticLayout[] mStaticLayouts;
     private int[] mTextHeights;
@@ -112,6 +113,7 @@ public class ImageTagView extends View {
         textSize = sp2px(getContext(), textSize);
         textLinePadding = dp2px(getContext(), textLinePadding);
         textLineSpacing = dp2px(getContext(), textLineSpacing);
+        mMinWidth = dp2px(getContext(), mMinWidth);
     }
 
     @Override
@@ -128,19 +130,37 @@ public class ImageTagView extends View {
         Log.d(TAG, "onLayout: mTextMaxWidth = " + mTextMaxWidth);
 
         addStaticLayout();
+        checkBorderAndChangeType();
     }
 
     /**
      * 文字最大能设置的宽度
      */
     private int getTextMaxWidth() {
-        int maxWidth;
-        if (mCenterX <= mTagViewRect.exactCenterX()) {
-            maxWidth = (int) (getMeasuredWidth() - mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
+        int maxWidth;//判断<=0的情况，此时应该调整类型
+        if (!isDirectionLeft()) {
+            maxWidth = getTextMaxWidthDirectionRight();
+            if (maxWidth <= mMinWidth) {//改变类型 防止显示时超出界限
+                maxWidth = getTextMaxWidthDirectionLeft();
+                autoChangeType = CHANGE_LEFT;
+
+            }
         } else {
-            maxWidth = (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
+            maxWidth = getTextMaxWidthDirectionLeft();
+            if (maxWidth <= mMinWidth) {//改变类型 防止显示时超出界限
+                maxWidth = getTextMaxWidthDirectionRight();
+                autoChangeType = CHANGE_RIGHT;
+            }
         }
         return maxWidth;
+    }
+
+    private int getTextMaxWidthDirectionRight() {
+        return (int) (getMeasuredWidth() - mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
+    }
+
+    private int getTextMaxWidthDirectionLeft() {
+        return (int) (mCenterX - lineWidth - lineRadiusWidth - textLinePadding);
     }
 
     /**
@@ -169,6 +189,67 @@ public class ImageTagView extends View {
             }
             Log.d(TAG, "addStaticLayout: mTextWidths[" + i + "] = " + mTextWidths[i]);
         }
+    }
+
+    private int autoChangeType = -3;
+    private final int CHANGE_LEFT = -1;
+    private final int CHANGE_RIGHT = -2;
+
+    //做一次边界检测  防止超出界限 兼容旧数据
+    private void checkBorderAndChangeType() {
+        switch (mCurrentType) {
+            case TYPE_ONE_LEFT:
+                if (autoChangeType == CHANGE_RIGHT) {
+                    mCurrentType = TYPE_ONE_RIGHT;
+                }
+                break;
+            case TYPE_ONE_RIGHT:
+                if (autoChangeType == CHANGE_LEFT) {
+                    mCurrentType = TYPE_ONE_LEFT;
+                }
+                break;
+            case TYPE_MORE_LEFT_TOP:
+                boolean leftChangeTop = (mCenterY - getTotalTextHeight()) < mTagViewRect.top;
+                if (autoChangeType == CHANGE_RIGHT) {
+                    mCurrentType = leftChangeTop ? TYPE_MORE_RIGHT_BOTTOM : TYPE_MORE_RIGHT_TOP;
+                } else {
+                    if (leftChangeTop) {
+                        mCurrentType = TYPE_MORE_LEFT_BOTTOM;
+                    }
+                }
+                break;
+            case TYPE_MORE_LEFT_BOTTOM:
+                boolean leftChangeBottom = (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom;
+                if (autoChangeType == CHANGE_RIGHT) {
+                    mCurrentType = leftChangeBottom ? TYPE_MORE_RIGHT_TOP : TYPE_MORE_RIGHT_BOTTOM;
+                } else {
+                    if (leftChangeBottom) {
+                        mCurrentType = TYPE_MORE_LEFT_TOP;
+                    }
+                }
+                break;
+            case TYPE_MORE_RIGHT_TOP:
+                boolean rightChangeTop = (mCenterY - getTotalTextHeight()) < mTagViewRect.top;
+                if (autoChangeType == CHANGE_LEFT) {
+                    mCurrentType = rightChangeTop ? TYPE_MORE_LEFT_BOTTOM : TYPE_MORE_LEFT_TOP;
+                } else {
+                    if (rightChangeTop) {
+                        mCurrentType = TYPE_MORE_RIGHT_BOTTOM;
+                    }
+                }
+                break;
+            case TYPE_MORE_RIGHT_BOTTOM:
+                boolean rightChangeBottom = (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom;
+                if (autoChangeType == CHANGE_LEFT) {
+                    mCurrentType = rightChangeBottom ? TYPE_MORE_LEFT_TOP : TYPE_MORE_LEFT_BOTTOM;
+                } else {
+                    if (rightChangeBottom) {
+                        mCurrentType = TYPE_MORE_RIGHT_TOP;
+                    }
+                }
+                break;
+        }
+        autoChangeType = -3;
     }
 
     private boolean isDirectionLeft() {
