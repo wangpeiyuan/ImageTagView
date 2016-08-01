@@ -63,7 +63,6 @@ public class ImageTagView extends View {
     private float mCenterX, mCenterY;//圆点的中心位置
 
     private int mTextMaxWidth;//文字最大能设置宽度
-    private int mMinWidth = 24;
 
     private StaticLayout[] mStaticLayouts;
     private int[] mTextHeights;
@@ -75,6 +74,7 @@ public class ImageTagView extends View {
 
     private Rect mTagTextRect;//文字的区间
     private Rect mCircleRect;//圆点的区间
+    private Rect mContentRect;//整个标签的区域 包含文字和圆点
 
     private Rect mTagViewRect;
 
@@ -92,20 +92,30 @@ public class ImageTagView extends View {
     }
 
     private void init() {
+        initDimension();
         mCurrentType = TYPE_NONE;
         mTagTextRect = new Rect();
         mCircleRect = new Rect();
         mTagViewRect = new Rect();
+        mContentRect = new Rect();
 
         mCirclePaint = new Paint();
         mCirclePaint.setAntiAlias(true);
+
         mLinePaint = new Paint();
         mLinePaint.setStyle(Paint.Style.STROKE);
         mLinePaint.setAntiAlias(true);
+        mLinePaint.setStrokeWidth(lineStrokeWidth);
+        mLinePaint.setColor(lineColor);
+
 
         mTextPaint = new TextPaint();
         mTextPaint.setAntiAlias(true);
+        mTextPaint.setTextSize(textSize);
+        mTextPaint.setColor(textColor);
+    }
 
+    private void initDimension() {
         mCircleRadius = dp2px(getContext(), mCircleRadius);
         lineWidth = dp2px(getContext(), lineWidth);
         lineStrokeWidth = dp2px(getContext(), lineStrokeWidth);
@@ -113,7 +123,6 @@ public class ImageTagView extends View {
         textSize = sp2px(getContext(), textSize);
         textLinePadding = dp2px(getContext(), textLinePadding);
         textLineSpacing = dp2px(getContext(), textLineSpacing);
-        mMinWidth = dp2px(getContext(), mMinWidth);
     }
 
     @Override
@@ -131,29 +140,55 @@ public class ImageTagView extends View {
         Log.d(TAG, "onLayout: mTextMaxWidth = " + mTextMaxWidth);
 
         addStaticLayout();
-        checkBorderAndChangeType();
+        checkAndReviseCenterY();
     }
 
     /**
-     * 文字最大能设置的宽度
+     * 文字最大能设置的宽度  判断最大的宽度是否足够绘制文字  不能的话 移动 X 值
      */
     private int getTextMaxWidth() {
-        int maxWidth;//判断<=0的情况，此时应该调整类型
+        int maxWidth;
+        int maxDesiredWidth = getMaxDesiredWidth();
         if (!isDirectionLeft()) {
             maxWidth = getTextMaxWidthDirectionRight();
-            if (maxWidth <= mMinWidth) {//改变类型 防止显示时超出界限
-                maxWidth = getTextMaxWidthDirectionLeft();
-                autoChangeType = CHANGE_LEFT;
-
+            if (maxWidth < maxDesiredWidth) {
+                Log.d(TAG, "getTextMaxWidth: DirectionRight ");
+                float reviseWidth = maxDesiredWidth - maxWidth;//需要调整的宽度
+                Log.d(TAG, "getTextMaxWidth: reviseWidth = " + reviseWidth);
+                mCenterX = (mCenterX - reviseWidth) <= mTagViewRect.left ?
+                        (mCircleRadius * 2) : (mCenterX - reviseWidth);
+                Log.d(TAG, "getTextMaxWidth: revise mCenterX = " + mCenterX);
+                maxWidth = getTextMaxWidthDirectionRight();
             }
         } else {
             maxWidth = getTextMaxWidthDirectionLeft();
-            if (maxWidth <= mMinWidth) {//改变类型 防止显示时超出界限
-                maxWidth = getTextMaxWidthDirectionRight();
-                autoChangeType = CHANGE_RIGHT;
+            if (maxWidth < maxDesiredWidth) {
+                Log.d(TAG, "getTextMaxWidth: DirectionLeft ");
+                float reviseWidth = maxDesiredWidth - maxWidth;//需要调整的宽度
+                Log.d(TAG, "getTextMaxWidth: reviseWidth = " + reviseWidth);
+                mCenterX = (mCenterX + reviseWidth) >= mTagViewRect.right ?
+                        (mTagViewRect.right - mCircleRadius * 2) : (mCenterX + reviseWidth);
+                Log.d(TAG, "getTextMaxWidth: revise mCenterX = " + mCenterX);
+                maxWidth = getTextMaxWidthDirectionLeft();
             }
         }
         return maxWidth;
+    }
+
+    /**
+     * 获取要绘制文字的最大宽度
+     */
+    private int getMaxDesiredWidth() {
+        int maxDesiredWidth = 0;
+        for (String tag : mTagTexts) {
+            int desiredWidth = (int) Layout.getDesiredWidth(tag, mTextPaint);
+            Log.d(TAG, "getMaxDesiredWidth: StringTag = " + tag + " desiredWidth = " + desiredWidth);
+            if (desiredWidth > maxDesiredWidth) {
+                maxDesiredWidth = desiredWidth;
+            }
+        }
+        Log.d(TAG, "getMaxDesiredWidth: maxDesiredWidth = " + maxDesiredWidth);
+        return maxDesiredWidth;
     }
 
     private int getTextMaxWidthDirectionRight() {
@@ -165,11 +200,28 @@ public class ImageTagView extends View {
     }
 
     /**
+     * 检测上下是否超出边界  超出移动 Y 值
+     */
+    private void checkAndReviseCenterY() {
+        if (isDirectionTop() && ((mCenterY - getTotalTextHeight()) < mTagViewRect.top)) {
+            Log.d(TAG, "checkAndReviseCenterY: DirectionTop ");
+            float reviseHeight = mTagViewRect.top - mCenterY - getTotalTextHeight();
+            Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
+            mCenterY = mCenterY + Math.abs(reviseHeight) + mCircleRadius * 2 + lineRadiusWidth;
+            Log.d(TAG, "checkAndReviseCenterY: revise mCenterY = " + mCenterY);
+        } else if (!isDirectionTop() && (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom) {
+            Log.d(TAG, "checkAndReviseCenterY: DirectionBottom ");
+            float reviseHeight = mCenterY + getTotalTextHeight() - mTagViewRect.bottom;
+            Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
+            mCenterY = mCenterY - Math.abs(reviseHeight) - mCircleRadius * 2 - lineRadiusWidth;
+            Log.d(TAG, "checkAndReviseCenterY: revise mCenterY = " + mCenterY);
+        }
+    }
+
+    /**
      * 添加文字绘制
      */
     private void addStaticLayout() {
-        mTextPaint.setTextSize(textSize);
-        mTextPaint.setColor(textColor);
         for (int i = 0; i < mTagTexts.size(); i++) {
             mStaticLayouts[i] = new StaticLayout(mTagTexts.get(i), mTextPaint, mTextMaxWidth,
                     isDirectionLeft() ? Layout.Alignment.ALIGN_OPPOSITE : Layout.Alignment.ALIGN_NORMAL,
@@ -192,71 +244,15 @@ public class ImageTagView extends View {
         }
     }
 
-    private int autoChangeType = -3;
-    private final int CHANGE_LEFT = -1;
-    private final int CHANGE_RIGHT = -2;
-
-    //做一次边界检测  防止超出界限 兼容旧数据
-    private void checkBorderAndChangeType() {
-        switch (mCurrentType) {
-            case TYPE_ONE_LEFT:
-                if (autoChangeType == CHANGE_RIGHT) {
-                    mCurrentType = TYPE_ONE_RIGHT;
-                }
-                break;
-            case TYPE_ONE_RIGHT:
-                if (autoChangeType == CHANGE_LEFT) {
-                    mCurrentType = TYPE_ONE_LEFT;
-                }
-                break;
-            case TYPE_MORE_LEFT_TOP:
-                boolean leftChangeTop = (mCenterY - getTotalTextHeight()) < mTagViewRect.top;
-                if (autoChangeType == CHANGE_RIGHT) {
-                    mCurrentType = leftChangeTop ? TYPE_MORE_RIGHT_BOTTOM : TYPE_MORE_RIGHT_TOP;
-                } else {
-                    if (leftChangeTop) {
-                        mCurrentType = TYPE_MORE_LEFT_BOTTOM;
-                    }
-                }
-                break;
-            case TYPE_MORE_LEFT_BOTTOM:
-                boolean leftChangeBottom = (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom;
-                if (autoChangeType == CHANGE_RIGHT) {
-                    mCurrentType = leftChangeBottom ? TYPE_MORE_RIGHT_TOP : TYPE_MORE_RIGHT_BOTTOM;
-                } else {
-                    if (leftChangeBottom) {
-                        mCurrentType = TYPE_MORE_LEFT_TOP;
-                    }
-                }
-                break;
-            case TYPE_MORE_RIGHT_TOP:
-                boolean rightChangeTop = (mCenterY - getTotalTextHeight()) < mTagViewRect.top;
-                if (autoChangeType == CHANGE_LEFT) {
-                    mCurrentType = rightChangeTop ? TYPE_MORE_LEFT_BOTTOM : TYPE_MORE_LEFT_TOP;
-                } else {
-                    if (rightChangeTop) {
-                        mCurrentType = TYPE_MORE_RIGHT_BOTTOM;
-                    }
-                }
-                break;
-            case TYPE_MORE_RIGHT_BOTTOM:
-                boolean rightChangeBottom = (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom;
-                if (autoChangeType == CHANGE_LEFT) {
-                    mCurrentType = rightChangeBottom ? TYPE_MORE_LEFT_TOP : TYPE_MORE_LEFT_BOTTOM;
-                } else {
-                    if (rightChangeBottom) {
-                        mCurrentType = TYPE_MORE_RIGHT_TOP;
-                    }
-                }
-                break;
-        }
-        autoChangeType = -3;
-    }
-
-    private boolean isDirectionLeft() {
+    public boolean isDirectionLeft() {
         return mCurrentType == TYPE_ONE_LEFT ||
                 mCurrentType == TYPE_MORE_LEFT_TOP ||
                 mCurrentType == TYPE_MORE_LEFT_BOTTOM;
+    }
+
+    public boolean isDirectionTop() {
+        return mCurrentType == TYPE_MORE_LEFT_TOP ||
+                mCurrentType == TYPE_MORE_RIGHT_TOP;
     }
 
     /**
@@ -308,8 +304,9 @@ public class ImageTagView extends View {
     }
 
     @Override
-    protected void dispatchDraw(Canvas canvas) {
-        Log.d(TAG, "dispatchDraw: ");
+    protected void onDraw(Canvas canvas) {
+        Log.d(TAG, "onDraw: ");
+        super.onDraw(canvas);
         if (!isTagsEmpty()) {
             //绘制圆形
             mCirclePaint.setColor(mCircleColor);
@@ -324,17 +321,20 @@ public class ImageTagView extends View {
             mCircleRect.bottom = (int) (mCenterY + mCircleRadius * mOutCircleRadiusFactor);
 
             //绘制线条
-            mLinePaint.setStrokeWidth(lineStrokeWidth);
-            mLinePaint.setColor(lineColor);
             canvas.drawPath(getLinePath(), mLinePaint);
 
             drawText(canvas);
 
+            mContentRect.left = mCircleRect.left < mTagTextRect.left ? mCircleRect.left : mTagTextRect.left;
+            mContentRect.top = mCircleRect.top < mTagTextRect.top ? mCircleRect.top : mTagTextRect.top;
+            mContentRect.right = mCircleRect.right > mTagTextRect.right ? mCircleRect.right : mTagTextRect.right;
+            mContentRect.bottom = mCircleRect.bottom > mTagTextRect.bottom ? mCircleRect.bottom : mTagTextRect.bottom;
+
             Log.d(TAG, "dispatchDraw: mCircleRect = " + mCircleRect.toString());
             Log.d(TAG, "dispatchDraw: mTagTextRect = " + mTagTextRect.toString());
+            Log.d(TAG, "dispatchDraw: mContentRect = " + mContentRect.toString());
         }
 
-        super.dispatchDraw(canvas);
     }
 
     /**
@@ -571,62 +571,58 @@ public class ImageTagView extends View {
         return newRect;
     }
 
-    /**
-     * 检测边界 防止标签超出范围
-     */
-    private boolean canMove(float centerX, float centerY) {
+    private Rect getMoveContentRect(float centerX, float centerY) {
         float distanceX = centerX - mCenterX;
         float distanceY = centerY - mCenterY;
 
-        Rect circleRectTemp = copyRect(mCircleRect);
+        Rect ContentRectTemp = copyRect(mContentRect);
 
-        circleRectTemp.left = (int) (circleRectTemp.left + distanceX);
-        circleRectTemp.top = (int) (circleRectTemp.top + distanceY);
-        circleRectTemp.right = (int) (circleRectTemp.right + distanceX);
-        circleRectTemp.bottom = (int) (circleRectTemp.bottom + distanceY);
+        ContentRectTemp.left = (int) (ContentRectTemp.left + distanceX);
+        ContentRectTemp.top = (int) (ContentRectTemp.top + distanceY);
+        ContentRectTemp.right = (int) (ContentRectTemp.right + distanceX);
+        ContentRectTemp.bottom = (int) (ContentRectTemp.bottom + distanceY);
 
-        Rect textRectTemp = copyRect(mTagTextRect);
-
-        textRectTemp.left = (int) (textRectTemp.left + distanceX);
-        textRectTemp.top = (int) (textRectTemp.top + distanceY);
-        textRectTemp.right = (int) (textRectTemp.right + distanceX);
-        textRectTemp.bottom = (int) (textRectTemp.bottom + distanceY);
-
-        return mTagViewRect.contains(circleRectTemp) &&
-                mTagViewRect.contains(textRectTemp);
+        return ContentRectTemp;
     }
 
     public void moveTo(float centerX, float centerY) {
-        if (!canMove(centerX, centerY)) return;
-        Log.d(TAG, "moveTo: " + mCenterX + " -> " + centerX + " "
-                + mCenterY + " -> " + centerY);
-        this.mCenterX = centerX;
-        this.mCenterY = centerY;
+        Rect moveContentRect = getMoveContentRect(centerX, centerY);
+
+        if (mTagViewRect.left <= moveContentRect.left && mTagViewRect.right >= moveContentRect.right) {
+            Log.d(TAG, "moveTo: " + mCenterX + " -> " + centerX + " ");
+            this.mCenterX = centerX;
+        }
+        if (mTagViewRect.top <= moveContentRect.top && mTagViewRect.bottom >= moveContentRect.bottom) {
+            Log.d(TAG, "moveTo: " + mCenterY + " -> " + centerY);
+            this.mCenterY = centerY;
+        }
         postInvalidate();
     }
 
     /**
      * 获取可以变换的类型 顺时针变换
+     *
+     * @param forceChangeType 强制变换类型 centerX、centerY 可能会变化
      */
-    public int getCanChangeType() {
+    public int getCanChangeType(boolean forceChangeType) {
         int type = mCurrentType;
 
         switch (mCurrentType) {
             case TYPE_ONE_LEFT:
                 if ((mTagViewRect.right - mCircleRect.right) >=
-                        (mCircleRect.left - mTagTextRect.left)) {
+                        (mCircleRect.left - mTagTextRect.left) || forceChangeType) {
                     type = TYPE_ONE_RIGHT;
                 }
                 break;
             case TYPE_ONE_RIGHT:
                 if ((mCircleRect.left - mTagViewRect.left) >=
-                        (mTagTextRect.right - mCircleRect.right)) {
+                        (mTagTextRect.right - mCircleRect.right) || forceChangeType) {
                     type = TYPE_ONE_LEFT;
                 }
                 break;
             case TYPE_MORE_LEFT_TOP:
                 if ((mTagViewRect.right - mCircleRect.right) >=
-                        (mCircleRect.left - mTagTextRect.left)) {
+                        (mCircleRect.left - mTagTextRect.left) || forceChangeType) {
                     type = TYPE_MORE_RIGHT_TOP;
                 } else if ((mTagViewRect.bottom - mTagTextRect.bottom) >=
                         mTagTextRect.height()) {
@@ -635,7 +631,7 @@ public class ImageTagView extends View {
                 break;
             case TYPE_MORE_LEFT_BOTTOM:
                 if ((mTagTextRect.top - mTagViewRect.top) >=
-                        mTagTextRect.height()) {
+                        mTagTextRect.height() || forceChangeType) {
                     type = TYPE_MORE_LEFT_TOP;
                 } else if ((mTagViewRect.right - mCircleRect.right) >=
                         (mCircleRect.left - mTagTextRect.left)) {
@@ -644,7 +640,7 @@ public class ImageTagView extends View {
                 break;
             case TYPE_MORE_RIGHT_TOP:
                 if ((mTagViewRect.bottom - mTagTextRect.bottom) >=
-                        mTagTextRect.height()) {
+                        mTagTextRect.height() || forceChangeType) {
                     type = TYPE_MORE_RIGHT_BOTTOM;
                 } else if ((mCircleRect.left - mTagViewRect.left) >=
                         (mTagTextRect.right - mCircleRect.right)) {
@@ -653,14 +649,12 @@ public class ImageTagView extends View {
                 break;
             case TYPE_MORE_RIGHT_BOTTOM:
                 if ((mCircleRect.left - mTagViewRect.left) >=
-                        (mTagTextRect.right - mCircleRect.right)) {
+                        (mTagTextRect.right - mCircleRect.right) || forceChangeType) {
                     type = TYPE_MORE_LEFT_BOTTOM;
                 } else if ((mTagTextRect.top - mTagViewRect.top) >=
                         mTagTextRect.height()) {
                     type = TYPE_MORE_RIGHT_TOP;
                 }
-                break;
-            default:
                 break;
         }
         return type;

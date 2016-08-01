@@ -101,7 +101,7 @@ public class SetTagGroupView extends FrameLayout {
                 }
             } else if (mCurrentTagView.isCenterClick((int) x, (int) y)) {
                 //变换类型
-                mCurrentTagView.changeType(mCurrentTagView.getCanChangeType());
+                mCurrentTagView.changeType(mCurrentTagView.getCanChangeType(true));
             } else if (mCurrentTagView.isContentTextClick((int) x, (int) y)) {
                 //编辑
                 if (mTagClickListener != null) {
