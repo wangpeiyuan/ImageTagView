@@ -13,6 +13,12 @@
     <com.wpy.imagetagview.SetTagGroupView
         android:id="@+id/tagGroupView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorPrimary"/>
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/img"/>
+    </com.wpy.imagetagview.SetTagGroupView>
 </RelativeLayout>
