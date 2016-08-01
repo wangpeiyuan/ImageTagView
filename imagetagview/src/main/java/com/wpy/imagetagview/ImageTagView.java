@@ -12,8 +12,9 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
+
+import com.wpy.imagetagview.util.TagLocalDisplay;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,13 +117,13 @@ public class ImageTagView extends View {
     }
 
     private void initDimension() {
-        mCircleRadius = dp2px(getContext(), mCircleRadius);
-        lineWidth = dp2px(getContext(), lineWidth);
-        lineStrokeWidth = dp2px(getContext(), lineStrokeWidth);
-        lineRadiusWidth = dp2px(getContext(), lineRadiusWidth);
-        textSize = sp2px(getContext(), textSize);
-        textLinePadding = dp2px(getContext(), textLinePadding);
-        textLineSpacing = dp2px(getContext(), textLineSpacing);
+        mCircleRadius = TagLocalDisplay.dp2px(getContext(), mCircleRadius);
+        lineWidth = TagLocalDisplay.dp2px(getContext(), lineWidth);
+        lineStrokeWidth = TagLocalDisplay.dp2px(getContext(), lineStrokeWidth);
+        lineRadiusWidth = TagLocalDisplay.dp2px(getContext(), lineRadiusWidth);
+        textSize = TagLocalDisplay.sp2px(getContext(), textSize);
+        textLinePadding = TagLocalDisplay.dp2px(getContext(), textLinePadding);
+        textLineSpacing = TagLocalDisplay.dp2px(getContext(), textLineSpacing);
     }
 
     @Override
@@ -705,13 +706,5 @@ public class ImageTagView extends View {
 
     public int getType() {
         return mCurrentType;
-    }
-
-    public static int dp2px(Context context, float dpValue) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dpValue, context.getResources().getDisplayMetrics());
-    }
-
-    public static float sp2px(Context context, float spValue) {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, spValue, context.getResources().getDisplayMetrics());
     }
 }
