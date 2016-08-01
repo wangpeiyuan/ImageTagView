@@ -120,7 +120,8 @@ public class ImageTagView extends View {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
         if (isTagsEmpty()) return;
-        getLocalVisibleRect(mTagViewRect);
+//        getLocalVisibleRect(mTagViewRect);//这个获取的是可见区域的大小，在 listview 中会导致大小不对问题
+        getDrawingRect(mTagViewRect);
         Log.d(TAG, "onLayout: mTagViewRect " + mTagViewRect.toString());
 
         checkAndSelectType();
