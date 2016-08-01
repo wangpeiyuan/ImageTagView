@@ -46,8 +46,8 @@ public class ImageTagView extends View {
 
     private int mCircleRadius = 4;//圆形的半径
     private int mCircleColor = Color.WHITE;
-    private int mOutCircleColorAlpha = 60;
-    private int mOutCircleRadiusFactor = 2;//外部圆形半径是内部的几倍
+    private int mOutCircleColor = 0x80000000;
+    private int mOutCircleRadius = 8;//外部圆形半径
 
     private int lineColor = Color.WHITE;
     private int lineWidth = 24;//横线的长度
@@ -118,6 +118,7 @@ public class ImageTagView extends View {
 
     private void initDimension() {
         mCircleRadius = TagLocalDisplay.dp2px(getContext(), mCircleRadius);
+        mOutCircleRadius = TagLocalDisplay.dp2px(getContext(), mOutCircleRadius);
         lineWidth = TagLocalDisplay.dp2px(getContext(), lineWidth);
         lineStrokeWidth = TagLocalDisplay.dp2px(getContext(), lineStrokeWidth);
         lineRadiusWidth = TagLocalDisplay.dp2px(getContext(), lineRadiusWidth);
@@ -157,7 +158,7 @@ public class ImageTagView extends View {
                 float reviseWidth = maxDesiredWidth - maxWidth;//需要调整的宽度
                 Log.d(TAG, "getTextMaxWidth: reviseWidth = " + reviseWidth);
                 mCenterX = (mCenterX - reviseWidth) <= mTagViewRect.left ?
-                        (mCircleRadius * 2) : (mCenterX - reviseWidth);
+                        (mOutCircleRadius) : (mCenterX - reviseWidth);
                 Log.d(TAG, "getTextMaxWidth: revise mCenterX = " + mCenterX);
                 maxWidth = getTextMaxWidthDirectionRight();
             }
@@ -168,7 +169,7 @@ public class ImageTagView extends View {
                 float reviseWidth = maxDesiredWidth - maxWidth;//需要调整的宽度
                 Log.d(TAG, "getTextMaxWidth: reviseWidth = " + reviseWidth);
                 mCenterX = (mCenterX + reviseWidth) >= mTagViewRect.right ?
-                        (mTagViewRect.right - mCircleRadius * 2) : (mCenterX + reviseWidth);
+                        (mTagViewRect.right - mOutCircleRadius) : (mCenterX + reviseWidth);
                 Log.d(TAG, "getTextMaxWidth: revise mCenterX = " + mCenterX);
                 maxWidth = getTextMaxWidthDirectionLeft();
             }
@@ -208,13 +209,13 @@ public class ImageTagView extends View {
             Log.d(TAG, "checkAndReviseCenterY: DirectionTop ");
             float reviseHeight = mTagViewRect.top - mCenterY - getTotalTextHeight();
             Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
-            mCenterY = mCenterY + Math.abs(reviseHeight) + mCircleRadius * 2 + lineRadiusWidth;
+            mCenterY = mCenterY + Math.abs(reviseHeight) + mOutCircleRadius + lineRadiusWidth;
             Log.d(TAG, "checkAndReviseCenterY: revise mCenterY = " + mCenterY);
         } else if (!isDirectionTop() && (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom) {
             Log.d(TAG, "checkAndReviseCenterY: DirectionBottom ");
             float reviseHeight = mCenterY + getTotalTextHeight() - mTagViewRect.bottom;
             Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
-            mCenterY = mCenterY - Math.abs(reviseHeight) - mCircleRadius * 2 - lineRadiusWidth;
+            mCenterY = mCenterY - Math.abs(reviseHeight) - mOutCircleRadius - lineRadiusWidth;
             Log.d(TAG, "checkAndReviseCenterY: revise mCenterY = " + mCenterY);
         }
     }
@@ -260,17 +261,16 @@ public class ImageTagView extends View {
      * 对中心点进行边界检测
      */
     private void checkCenterBorder() {
-        int radius = mCircleRadius * mOutCircleRadiusFactor;
-        if (mCenterX - radius < mTagViewRect.left) {
-            mCenterX = mCenterX + radius;
-        } else if (mCenterX + radius > mTagViewRect.right) {
-            mCenterX = mCenterX - radius;
+        if (mCenterX - mOutCircleRadius < mTagViewRect.left) {
+            mCenterX = mCenterX + mOutCircleRadius;
+        } else if (mCenterX + mOutCircleRadius > mTagViewRect.right) {
+            mCenterX = mCenterX - mOutCircleRadius;
         }
 
-        if (mCenterY - radius < mTagViewRect.top) {
-            mCenterY = mCenterY + radius;
-        } else if (mCenterY + radius > mTagViewRect.bottom) {
-            mCenterY = mCenterY - radius;
+        if (mCenterY - mOutCircleRadius < mTagViewRect.top) {
+            mCenterY = mCenterY + mOutCircleRadius;
+        } else if (mCenterY + mOutCircleRadius > mTagViewRect.bottom) {
+            mCenterY = mCenterY - mOutCircleRadius;
         }
     }
 
@@ -309,20 +309,21 @@ public class ImageTagView extends View {
         Log.d(TAG, "onDraw: ");
         super.onDraw(canvas);
         if (!isTagsEmpty()) {
-            //绘制圆形
-            mCirclePaint.setColor(mCircleColor);
-            canvas.drawCircle(mCenterX, mCenterY, mCircleRadius, mCirclePaint);
-            mCirclePaint.setAlpha(mOutCircleColorAlpha);
-            canvas.drawCircle(mCenterX, mCenterY, mCircleRadius * mOutCircleRadiusFactor, mCirclePaint);
+            //绘制外圆
+            mCirclePaint.setColor(mOutCircleColor);
+            canvas.drawCircle(mCenterX, mCenterY, mOutCircleRadius, mCirclePaint);
 
             //圆点范围坐标
-            mCircleRect.left = (int) (mCenterX - mCircleRadius * mOutCircleRadiusFactor);
-            mCircleRect.top = (int) (mCenterY - mCircleRadius * mOutCircleRadiusFactor);
-            mCircleRect.right = (int) (mCenterX + mCircleRadius * mOutCircleRadiusFactor);
-            mCircleRect.bottom = (int) (mCenterY + mCircleRadius * mOutCircleRadiusFactor);
+            mCircleRect.left = (int) (mCenterX - mOutCircleRadius);
+            mCircleRect.top = (int) (mCenterY - mOutCircleRadius);
+            mCircleRect.right = (int) (mCenterX + mOutCircleRadius);
+            mCircleRect.bottom = (int) (mCenterY + mOutCircleRadius);
 
             //绘制线条
             canvas.drawPath(getLinePath(), mLinePaint);
+            //绘制内圆
+            mCirclePaint.setColor(mCircleColor);
+            canvas.drawCircle(mCenterX, mCenterY, mCircleRadius, mCirclePaint);
 
             drawText(canvas);
 
@@ -331,9 +332,9 @@ public class ImageTagView extends View {
             mContentRect.right = mCircleRect.right > mTagTextRect.right ? mCircleRect.right : mTagTextRect.right;
             mContentRect.bottom = mCircleRect.bottom > mTagTextRect.bottom ? mCircleRect.bottom : mTagTextRect.bottom;
 
-            Log.d(TAG, "dispatchDraw: mCircleRect = " + mCircleRect.toString());
-            Log.d(TAG, "dispatchDraw: mTagTextRect = " + mTagTextRect.toString());
-            Log.d(TAG, "dispatchDraw: mContentRect = " + mContentRect.toString());
+            Log.d(TAG, "onDraw: mCircleRect = " + mCircleRect.toString());
+            Log.d(TAG, "onDraw: mTagTextRect = " + mTagTextRect.toString());
+            Log.d(TAG, "onDraw: mContentRect = " + mContentRect.toString());
         }
 
     }
