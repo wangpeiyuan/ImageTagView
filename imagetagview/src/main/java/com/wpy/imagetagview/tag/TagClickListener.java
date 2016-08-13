@@ -1,4 +1,4 @@
-package com.wpy.imagetagview;
+package com.wpy.imagetagview.tag;
 
 import android.view.View;
 

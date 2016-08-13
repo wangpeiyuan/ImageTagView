@@ -1,4 +1,4 @@
-package com.wpy.imagetagview;
+package com.wpy.imagetagview.tag;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -50,7 +50,7 @@ public class ImageTagView extends View {
     private int mOutCircleRadius = 8;//外部圆形半径
 
     private int lineColor = Color.WHITE;
-    private int lineWidth = 24;//横线的长度
+    private int lineWidth = 16;//横线的长度
     private int lineStrokeWidth = 1;//线条的大小
     private int lineRadiusWidth = 4;//横竖两条线中间弧度的半径
 
@@ -108,7 +108,6 @@ public class ImageTagView extends View {
         mLinePaint.setAntiAlias(true);
         mLinePaint.setStrokeWidth(lineStrokeWidth);
         mLinePaint.setColor(lineColor);
-
 
         mTextPaint = new TextPaint();
         mTextPaint.setAntiAlias(true);
