@@ -204,13 +204,13 @@ public class ImageTagView extends View {
      * 检测上下是否超出边界  超出移动 Y 值
      */
     private void checkAndReviseCenterY() {
-        if (isDirectionTop() && ((mCenterY - getTotalTextHeight()) < mTagViewRect.top)) {
+        if (isDirectionTop() && ((mCenterY - getTotalTextHeight() - lineRadiusWidth) < mTagViewRect.top)) {
             Log.d(TAG, "checkAndReviseCenterY: DirectionTop ");
             float reviseHeight = mTagViewRect.top - mCenterY - getTotalTextHeight();
             Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
             mCenterY = mCenterY + Math.abs(reviseHeight) + mOutCircleRadius + lineRadiusWidth;
             Log.d(TAG, "checkAndReviseCenterY: revise mCenterY = " + mCenterY);
-        } else if (!isDirectionTop() && (mCenterY + getTotalTextHeight()) > mTagViewRect.bottom) {
+        } else if (!isDirectionTop() && (mCenterY + getTotalTextHeight() + lineRadiusWidth) > mTagViewRect.bottom) {
             Log.d(TAG, "checkAndReviseCenterY: DirectionBottom ");
             float reviseHeight = mCenterY + getTotalTextHeight() - mTagViewRect.bottom;
             Log.d(TAG, "checkAndReviseCenterY: reviseHeight = " + reviseHeight);
