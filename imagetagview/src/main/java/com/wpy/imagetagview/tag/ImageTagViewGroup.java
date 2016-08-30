@@ -1,14 +1,23 @@
 package com.wpy.imagetagview.tag;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.wpy.imagetagview.util.TagLocalDisplay;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 图片标签  另一种实现方式
@@ -17,6 +26,49 @@ import android.widget.TextView;
  */
 public class ImageTagViewGroup extends ViewGroup {
     private static final String TAG = "ImageTagViewGroup";
+
+    public static final int TYPE_NONE = 0;//如果设为这个类型  会自己检测并设定类型
+
+    //单条标签 左右两个方向
+    public static final int TYPE_ONE_LEFT = 1;
+    public static final int TYPE_ONE_RIGHT = 2;
+
+    //多条标签 上下左右四个方向
+    public static final int TYPE_MORE_LEFT_TOP = 13;
+    public static final int TYPE_MORE_LEFT_BOTTOM = 14;
+    public static final int TYPE_MORE_RIGHT_TOP = 23;
+    public static final int TYPE_MORE_RIGHT_BOTTOM = 24;
+
+    private int mCurrentType = TYPE_NONE;//标签的类型
+
+    private TextView[] mTextViews;
+    private Rect[] mTextViewRects;
+
+    private Rect mViewGroupRect;
+    private PointF mCenterPointF = new PointF();
+
+    private Paint mCirclePaint;
+    private Paint mLinePaint;
+
+    private Path mLinePath;
+
+    private int mCircleRadius = 4;//圆形的半径
+    private int mCircleColor = Color.WHITE;
+    private int mOutCircleColor = 0x80000000;
+    private int mOutCircleRadius = 8;//外部圆形半径
+
+    private int lineColor = Color.WHITE;
+    private int lineWidth = 14;//横线的长度
+    private int lineStrokeWidth = 1;//线条的大小
+    private int lineRadiusWidth = 4;//横竖两条线中间弧度的半径
+
+    private float textSize = 12f;
+    private int textColor = Color.WHITE;
+
+    private int textLinePadding = 6;//文字和标签图形之间的间距
+    private int textLineSpacing = 6;//两行文字之间的间距
+    private float textSpacingAdd = 9f;//换行间距
+
 
     public ImageTagViewGroup(Context context) {
         this(context, null);
@@ -28,60 +80,300 @@ public class ImageTagViewGroup extends ViewGroup {
 
     public ImageTagViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
     }
 
-    private TextView mTextView;
-    private Rect mRect;
-    private Rect mTextViewRect;
-    private PointF mPoint = new PointF();
-
     private void init() {
-        mTextView = new TextView(getContext());
-        mTextView.setText("这个一个测试标签啊啊啊啊啊");
-        mTextView.setTextSize(12.0f);
-        mTextView.setTextColor(Color.WHITE);
-        mTextView.setIncludeFontPadding(false);
-        addView(mTextView);
+        initDimension();
+        mCurrentType = TYPE_NONE;
+        mViewGroupRect = new Rect();
 
-        mRect = new Rect();
-        mTextViewRect = new Rect();
+        mLinePath = new Path();
+
+        mCirclePaint = new Paint();
+        mCirclePaint.setAntiAlias(true);
+
+        mLinePaint = new Paint();
+        mLinePaint.setStyle(Paint.Style.STROKE);
+        mLinePaint.setAntiAlias(true);
+        mLinePaint.setStrokeWidth(lineStrokeWidth);
+        mLinePaint.setColor(lineColor);
+    }
+
+    private void initDimension() {
+        mCircleRadius = TagLocalDisplay.dp2px(getContext(), mCircleRadius);
+        mOutCircleRadius = TagLocalDisplay.dp2px(getContext(), mOutCircleRadius);
+        lineWidth = TagLocalDisplay.dp2px(getContext(), lineWidth);
+        lineStrokeWidth = TagLocalDisplay.dp2px(getContext(), lineStrokeWidth);
+        lineRadiusWidth = TagLocalDisplay.dp2px(getContext(), lineRadiusWidth);
+        textLinePadding = TagLocalDisplay.dp2px(getContext(), textLinePadding);
+        textLineSpacing = TagLocalDisplay.dp2px(getContext(), textLineSpacing);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (mTextView == null) return;
+        if (isEmpty()) return;
         measureChildren(widthMeasureSpec, heightMeasureSpec);
-        getDrawingRect(mRect);
-        Log.d(TAG, "onMeasure: " + mRect.toString());
-        mTextViewRect.left = (int) mPoint.x;
-        mTextViewRect.top = (int) mPoint.y;
-        int measuredWidth = mTextView.getMeasuredWidth();
-        int measuredHeight = mTextView.getMeasuredHeight();
-        if (measuredWidth > mRect.right - mPoint.x) {
-            mTextViewRect.right = mRect.right;
-            mTextViewRect.bottom = (int) (mPoint.y + measuredHeight * Math.ceil(measuredWidth / (mRect.right - mPoint.x)));
-        } else {
-            mTextViewRect.right = (int) (mPoint.x + measuredWidth);
-            mTextViewRect.bottom = (int) (mPoint.y + measuredHeight);
+        getDrawingRect(mViewGroupRect);
+        Log.d(TAG, "onMeasure: " + mViewGroupRect.toString());
+
+        checkCenterBorder();
+        checkAndSelectTypeWhenNone();
+
+        setTextViewRectAndPath();
+    }
+
+    /**
+     * 对中心点进行边界检测
+     */
+    private void checkCenterBorder() {
+        if (mCenterPointF.x - mOutCircleRadius <= mViewGroupRect.left) {
+            mCenterPointF.x = mCenterPointF.x + mOutCircleRadius;
+        } else if (mCenterPointF.x + mOutCircleRadius >= mViewGroupRect.right) {
+            mCenterPointF.x = mCenterPointF.x - mOutCircleRadius;
         }
+
+        if (mCenterPointF.y - mOutCircleRadius <= mViewGroupRect.top) {
+            mCenterPointF.y = mCenterPointF.y + mOutCircleRadius;
+        } else if (mCenterPointF.y + mOutCircleRadius >= mViewGroupRect.bottom) {
+            mCenterPointF.y = mCenterPointF.y - mOutCircleRadius;
+        }
+    }
+
+    /**
+     * 未设置方向时，检测并设置一个方向
+     */
+    private void checkAndSelectTypeWhenNone() {
+        if (mCurrentType != TYPE_NONE) return;
+        if (mTextViews.length == 1) {//单条标签
+            if (mCenterPointF.x <= mViewGroupRect.exactCenterX()) {
+                mCurrentType = TYPE_ONE_RIGHT;
+            } else {
+                mCurrentType = TYPE_ONE_LEFT;
+            }
+        } else if (mTextViews.length > 1) {//多条标签
+            //将 view 分为均匀的 4块 区域
+            if (mCenterPointF.x <= mViewGroupRect.exactCenterX()) {
+                if (mCenterPointF.y <= mViewGroupRect.exactCenterY()) {
+                    mCurrentType = TYPE_MORE_RIGHT_BOTTOM;
+                } else {
+                    mCurrentType = TYPE_MORE_RIGHT_TOP;
+                }
+            } else if (mCenterPointF.x > mViewGroupRect.exactCenterX()) {
+                if (mCenterPointF.y <= mViewGroupRect.exactCenterY()) {
+                    mCurrentType = TYPE_MORE_LEFT_BOTTOM;
+                } else {
+                    mCurrentType = TYPE_MORE_LEFT_TOP;
+                }
+            }
+        }
+        Log.d(TAG, "checkAndSelectType: mCurrentType = " + mCurrentType);
+    }
+
+    private void setTextViewRectAndPath() {
+        mLinePath.reset();
+        // TODO: 16/8/29 需要注意 四边可能超出边界的情况 要移动 X、Y 值
+        switch (mCurrentType) {
+            case TYPE_ONE_LEFT:
+                /**
+                 * text ————
+                 */
+                mTextViews[0].setGravity(Gravity.RIGHT);
+                int measuredWidth = mTextViews[0].getMeasuredWidth();
+                int measuredHeight = mTextViews[0].getMeasuredHeight() / mTextViews[0].getLineCount();
+
+                float reviseWidth = measuredWidth - getTextMaxWidthDirectionLeft();
+
+                if (reviseWidth > 0) {
+                    mCenterPointF.x = (mCenterPointF.x + reviseWidth) >= mViewGroupRect.right ?
+                            (mViewGroupRect.right - mOutCircleRadius) : (mCenterPointF.x + reviseWidth);
+                    mTextViewRects[0].left = mViewGroupRect.left;
+
+                    float maxWidth = getTextMaxWidthDirectionLeft();
+                    mTextViewRects[0].right = (int) maxWidth;
+
+                    mTextViewRects[0].bottom = (int) (mCenterPointF.y +
+                            measuredHeight * Math.ceil(measuredWidth / maxWidth));
+
+                    if (mTextViewRects[0].bottom > mViewGroupRect.bottom) {
+                        int reviseHeight = mTextViewRects[0].bottom - mViewGroupRect.bottom;
+                        mTextViewRects[0].bottom = mViewGroupRect.bottom;
+                        mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mViewGroupRect.top ?
+                                (mViewGroupRect.top - mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
+                    }
+
+                    mTextViewRects[0].top = (int) mCenterPointF.y;
+                } else {
+                    float maxWidth = getTextMaxWidthDirectionLeft();
+                    mTextViewRects[0].left = (int) (maxWidth - measuredWidth);
+                    mTextViewRects[0].right = (int) maxWidth;
+                    mTextViewRects[0].top = (int) mCenterPointF.y;
+                    mTextViewRects[0].bottom = (int) (mCenterPointF.y + measuredHeight);
+                }
+
+                mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x - lineWidth, mCenterPointF.y);
+                break;
+            case TYPE_ONE_RIGHT:
+                /**
+                 * ———— text
+                 */
+                mTextViews[0].setGravity(Gravity.LEFT);
+                // TODO: 16/8/30 如果超出屏幕 此时会自动换行
+                int measuredWidth1 = mTextViews[0].getMeasuredWidth();
+                int measuredHeight1 = mTextViews[0].getMeasuredHeight() / mTextViews[0].getLineCount();
+                float reviseWidth1 = measuredWidth1 - getTextMaxWidthDirectionRight();
+
+                if (reviseWidth1 > 0) {
+                    mCenterPointF.x = (mCenterPointF.x - reviseWidth1) <= mViewGroupRect.left ?
+                            (mViewGroupRect.left + mOutCircleRadius) : (mCenterPointF.x - reviseWidth1);
+                    mTextViewRects[0].left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
+                    mTextViewRects[0].right = (mTextViewRects[0].left + measuredWidth1) > mViewGroupRect.right ?
+                            mViewGroupRect.right : (mTextViewRects[0].left + measuredWidth1);
+
+                    mTextViewRects[0].bottom = (int) (mCenterPointF.y +
+                            measuredHeight1 * Math.ceil(measuredWidth1 / getTextMaxWidthDirectionRight()));
+                    if (mTextViewRects[0].bottom > mViewGroupRect.bottom) {
+                        int i = mTextViewRects[0].bottom - mViewGroupRect.bottom;
+                        mTextViewRects[0].bottom = mViewGroupRect.bottom;
+                        mCenterPointF.y = (mCenterPointF.y - i) <= mViewGroupRect.top ?
+                                (mViewGroupRect.top - mOutCircleRadius) : (mCenterPointF.y - i);
+                    }
+                    mTextViewRects[0].top = (int) mCenterPointF.y;
+                } else {
+                    mTextViewRects[0].left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
+                    mTextViewRects[0].right = mTextViewRects[0].left + measuredWidth1;
+                    mTextViewRects[0].top = (int) mCenterPointF.y;
+                    mTextViewRects[0].bottom = (int) (mCenterPointF.y + measuredHeight1);
+                }
+
+                mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x + lineWidth, mCenterPointF.y);
+                break;
+            case TYPE_MORE_LEFT_TOP:
+                /**
+                 * |
+                 * |
+                 * |_____
+                 */
+                break;
+            case TYPE_MORE_LEFT_BOTTOM:
+                /**
+                 * |------
+                 * |
+                 * |
+                 */
+                break;
+            case TYPE_MORE_RIGHT_TOP:
+                /**
+                 *      |
+                 *      |
+                 * _____|
+                 */
+                break;
+            case TYPE_MORE_RIGHT_BOTTOM:
+                /**
+                 * ------|
+                 *       |
+                 *       |
+                 */
+                break;
+        }
+    }
+
+    private float getTextMaxWidthDirectionRight() {
+        return mViewGroupRect.right - mCenterPointF.x - lineWidth - lineRadiusWidth - textLinePadding;
+    }
+
+    private float getTextMaxWidthDirectionLeft() {
+        return mCenterPointF.x - lineWidth - lineRadiusWidth - textLinePadding;
     }
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        Log.d(TAG, "onLayout: ");
-        if (mTextView == null) return;
-        Log.d(TAG, "onLayout: mTextViewRect = " + mTextViewRect.toString());
-        mTextView.measure(MeasureSpec.makeMeasureSpec(mTextViewRect.width(), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(mTextViewRect.height(), MeasureSpec.EXACTLY));
-        mTextView.layout(mTextViewRect.left, mTextViewRect.top, mTextViewRect.right, mTextViewRect.bottom);
+        if (isEmpty()) return;
+        for (int i = 0; i < mTextViews.length; i++) {
+            Log.d(TAG, "onLayout: mTextViewRect[" + i + "] = " + mTextViewRects[i].toString());
+            mTextViews[i].measure(MeasureSpec.makeMeasureSpec(mTextViewRects[i].width(), MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(mTextViewRects[i].height(), MeasureSpec.EXACTLY));
+            mTextViews[i].layout(mTextViewRects[i].left, mTextViewRects[i].top,
+                    mTextViewRects[i].right, mTextViewRects[i].bottom);
+        }
     }
 
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (isEmpty()) return;
+
+        //绘制外圆
+        mCirclePaint.setColor(mOutCircleColor);
+        canvas.drawCircle(mCenterPointF.x, mCenterPointF.y, mOutCircleRadius, mCirclePaint);
+
+        //绘制线条
+        canvas.drawPath(mLinePath, mLinePaint);
+
+        //绘制内圆
+        mCirclePaint.setColor(mCircleColor);
+        canvas.drawCircle(mCenterPointF.x, mCenterPointF.y, mCircleRadius, mCirclePaint);
+
+    }
+
+    private boolean isEmpty() {
+        return mTextViews == null || mTextViews.length < 1;
+    }
+
+    public void addTags(PointF centerPointF, List<String> tagContents) {
+        addTags(centerPointF, tagContents, TYPE_NONE);
+    }
+
+    public void addTags(PointF centerPointF, List<String> tagContents, int type) {
+        if (centerPointF == null || tagContents == null || tagContents.isEmpty()) return;
+        mCenterPointF.set(centerPointF);
+        mCurrentType = type;
+
+        mTextViews = new TextView[tagContents.size()];
+        mTextViewRects = new Rect[tagContents.size()];
+
+        for (int i = 0; i < tagContents.size(); i++) {
+            mTextViewRects[i] = new Rect();
+
+            mTextViews[i] = new TextView(getContext());
+            mTextViews[i].setTextSize(textSize);
+            mTextViews[i].setTextColor(textColor);
+            mTextViews[i].setIncludeFontPadding(false);
+
+            mTextViews[i].setText(tagContents.get(i));
+            addView(mTextViews[i]);
+        }
+    }
+
+    public void clear() {
+        mTextViews = null;
+        mTextViewRects = null;
+        mCurrentType = TYPE_NONE;
+        mLinePath.reset();
+        removeAllViews();
+    }
+
+    private void addTest(float x, float y) {
+        List<String> strings = new ArrayList<>();
+        strings.add("这是一条测试的非常长长长长长长长长长长长长长长长长长长长长的标签~~~");
+//        strings.add("16768 数字");
+//        strings.add("This is a test");
+
+        addTags(new PointF(x, y), strings, TYPE_ONE_RIGHT);
+    }
+
+    /**
+     * todo 点击事件处理
+     */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mTextView == null) {
-            mPoint.set(event.getX(), event.getY());
-            init();
+        if (isEmpty()) {
+            addTest(event.getX(), event.getY());
         }
         return super.onTouchEvent(event);
     }
