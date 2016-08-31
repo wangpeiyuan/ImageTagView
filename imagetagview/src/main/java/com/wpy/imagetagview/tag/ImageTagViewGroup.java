@@ -58,18 +58,19 @@ public class ImageTagViewGroup extends ViewGroup {
     private int mOutCircleColor = 0x80000000;
     private int mOutCircleRadius = 8;//外部圆形半径
 
-    private int lineColor = Color.WHITE;
-    private int lineWidth = 14;//横线的长度
-    private int lineStrokeWidth = 1;//线条的大小
-    private int lineRadiusWidth = 4;//横竖两条线中间弧度的半径
+    private int mLineColor = Color.WHITE;
+    private int mLineWidth = 14;//横线的长度
+    private int mLineStrokeWidth = 1;//线条的大小
+    private int mLineRadiusWidth = 4;//横竖两条线中间弧度的半径
+    private int mLineShadowColor = 0xB3000000;
 
-    private float textSize = 12f;
-    private int textColor = Color.WHITE;
+    private float mTextSize = 12f;
+    private int mTextColor = Color.WHITE;
+    private float mTextLineSpacingExtra = 4f;//TextView 换行间距
+    private int mTextShadowColor = 0xB3000000;
 
-    private int textLinePadding = 6;//文字和标签图形之间的间距
-    private int textLineSpacing = 6;//两行文字之间的间距
-    private float textSpacingAdd = 9f;//换行间距
-
+    private int mTextLinePadding = 6;//文字和标签图形之间的间距
+    private int mTextLineSpacing = 6;//两行文字之间的间距
 
     public ImageTagViewGroup(Context context) {
         this(context, null);
@@ -86,6 +87,7 @@ public class ImageTagViewGroup extends ViewGroup {
 
     private void init() {
         initDimension();
+        setWillNotDraw(false);//如果 ViewGroup 没有设置背景的话 需要设置成 false 否则 onDraw() 不会执行
         mCurrentType = TYPE_NONE;
         mViewGroupRect = new Rect();
 
@@ -97,18 +99,19 @@ public class ImageTagViewGroup extends ViewGroup {
         mLinePaint = new Paint();
         mLinePaint.setStyle(Paint.Style.STROKE);
         mLinePaint.setAntiAlias(true);
-        mLinePaint.setStrokeWidth(lineStrokeWidth);
-        mLinePaint.setColor(lineColor);
+        mLinePaint.setStrokeWidth(mLineStrokeWidth);
+        mLinePaint.setColor(mLineColor);
+        mLinePaint.setShadowLayer(1f, 0, 0, mLineShadowColor);
     }
 
     private void initDimension() {
         mCircleRadius = TagLocalDisplay.dp2px(getContext(), mCircleRadius);
         mOutCircleRadius = TagLocalDisplay.dp2px(getContext(), mOutCircleRadius);
-        lineWidth = TagLocalDisplay.dp2px(getContext(), lineWidth);
-        lineStrokeWidth = TagLocalDisplay.dp2px(getContext(), lineStrokeWidth);
-        lineRadiusWidth = TagLocalDisplay.dp2px(getContext(), lineRadiusWidth);
-        textLinePadding = TagLocalDisplay.dp2px(getContext(), textLinePadding);
-        textLineSpacing = TagLocalDisplay.dp2px(getContext(), textLineSpacing);
+        mLineWidth = TagLocalDisplay.dp2px(getContext(), mLineWidth);
+        mLineStrokeWidth = TagLocalDisplay.dp2px(getContext(), mLineStrokeWidth);
+        mLineRadiusWidth = TagLocalDisplay.dp2px(getContext(), mLineRadiusWidth);
+        mTextLinePadding = TagLocalDisplay.dp2px(getContext(), mTextLinePadding);
+        mTextLineSpacing = TagLocalDisplay.dp2px(getContext(), mTextLineSpacing);
     }
 
     @Override
@@ -184,7 +187,7 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeOneLeftTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x - lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x - mLineWidth, mCenterPointF.y);
                 break;
             case TYPE_ONE_RIGHT:
                 /**
@@ -193,7 +196,7 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeOneRightTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x + lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x + mLineWidth, mCenterPointF.y);
                 break;
             case TYPE_MORE_LEFT_TOP:
                 /**
@@ -204,18 +207,18 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeMoreLeftTopTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x - lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x - mLineWidth, mCenterPointF.y);
 
-                rectF = new RectF(mCenterPointF.x - lineWidth - lineRadiusWidth,
-                        mCenterPointF.y - lineRadiusWidth * 2,
-                        mCenterPointF.x - lineWidth + lineRadiusWidth, mCenterPointF.y);
+                rectF = new RectF(mCenterPointF.x - mLineWidth - mLineRadiusWidth,
+                        mCenterPointF.y - mLineRadiusWidth * 2,
+                        mCenterPointF.x - mLineWidth + mLineRadiusWidth, mCenterPointF.y);
                 mLinePath.addArc(rectF, 90, 90);
 
-                mLinePath.moveTo(mCenterPointF.x - lineWidth - lineRadiusWidth,
-                        mCenterPointF.y - lineRadiusWidth);
+                mLinePath.moveTo(mCenterPointF.x - mLineWidth - mLineRadiusWidth,
+                        mCenterPointF.y - mLineRadiusWidth);
 
-                mLinePath.lineTo(mCenterPointF.x - lineWidth - lineRadiusWidth,
-                        mCenterPointF.y - lineRadiusWidth - (mCenterPointF.y - mTextViewRects[0].top));
+                mLinePath.lineTo(mCenterPointF.x - mLineWidth - mLineRadiusWidth,
+                        mCenterPointF.y - mLineRadiusWidth - (mCenterPointF.y - mTextViewRects[0].top));
                 break;
             case TYPE_MORE_LEFT_BOTTOM:
                 /**
@@ -226,16 +229,16 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeMoreLeftBottomTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x - lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x - mLineWidth, mCenterPointF.y);
 
-                rectF = new RectF(mCenterPointF.x - lineWidth - lineRadiusWidth, mCenterPointF.y,
-                        mCenterPointF.x - lineWidth + lineRadiusWidth, mCenterPointF.y + lineRadiusWidth * 2);
+                rectF = new RectF(mCenterPointF.x - mLineWidth - mLineRadiusWidth, mCenterPointF.y,
+                        mCenterPointF.x - mLineWidth + mLineRadiusWidth, mCenterPointF.y + mLineRadiusWidth * 2);
                 mLinePath.addArc(rectF, 180, 90);
 
-                mLinePath.moveTo(mCenterPointF.x - lineWidth - lineRadiusWidth, mCenterPointF.y + lineRadiusWidth);
+                mLinePath.moveTo(mCenterPointF.x - mLineWidth - mLineRadiusWidth, mCenterPointF.y + mLineRadiusWidth);
 
-                mLinePath.lineTo(mCenterPointF.x - lineWidth - lineRadiusWidth,
-                        mCenterPointF.y + lineRadiusWidth +
+                mLinePath.lineTo(mCenterPointF.x - mLineWidth - mLineRadiusWidth,
+                        mCenterPointF.y + mLineRadiusWidth +
                                 (mTextViewRects[mTextViewRects.length - 1].bottom - mCenterPointF.y));
                 break;
             case TYPE_MORE_RIGHT_TOP:
@@ -247,16 +250,16 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeMoreRightTopTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x + lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x + mLineWidth, mCenterPointF.y);
 
-                rectF = new RectF(mCenterPointF.x + lineWidth - lineRadiusWidth, mCenterPointF.y - lineRadiusWidth * 2,
-                        mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y);
+                rectF = new RectF(mCenterPointF.x + mLineWidth - mLineRadiusWidth, mCenterPointF.y - mLineRadiusWidth * 2,
+                        mCenterPointF.x + mLineWidth + mLineRadiusWidth, mCenterPointF.y);
                 mLinePath.addArc(rectF, 0, 90);
 
-                mLinePath.moveTo(mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y - lineRadiusWidth);
+                mLinePath.moveTo(mCenterPointF.x + mLineWidth + mLineRadiusWidth, mCenterPointF.y - mLineRadiusWidth);
 
-                mLinePath.lineTo(mCenterPointF.x + lineWidth + lineRadiusWidth,
-                        mCenterPointF.y - lineRadiusWidth - (mCenterPointF.y - mTextViewRects[0].top));
+                mLinePath.lineTo(mCenterPointF.x + mLineWidth + mLineRadiusWidth,
+                        mCenterPointF.y - mLineRadiusWidth - (mCenterPointF.y - mTextViewRects[0].top));
                 break;
             case TYPE_MORE_RIGHT_BOTTOM:
                 /**
@@ -267,25 +270,28 @@ public class ImageTagViewGroup extends ViewGroup {
                 setTypeMoreRightBottomTextViewRect();
 
                 mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
-                mLinePath.lineTo(mCenterPointF.x + lineWidth, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x + mLineWidth, mCenterPointF.y);
 
-                rectF = new RectF(mCenterPointF.x + lineWidth - lineRadiusWidth, mCenterPointF.y,
-                        mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y + lineRadiusWidth * 2);
+                rectF = new RectF(mCenterPointF.x + mLineWidth - mLineRadiusWidth, mCenterPointF.y,
+                        mCenterPointF.x + mLineWidth + mLineRadiusWidth, mCenterPointF.y + mLineRadiusWidth * 2);
                 mLinePath.addArc(rectF, 270, 90);
 
-                mLinePath.moveTo(mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y + lineRadiusWidth);
+                mLinePath.moveTo(mCenterPointF.x + mLineWidth + mLineRadiusWidth, mCenterPointF.y + mLineRadiusWidth);
 
-                mLinePath.lineTo(mCenterPointF.x + lineWidth + lineRadiusWidth,
-                        mCenterPointF.y + lineRadiusWidth +
+                mLinePath.lineTo(mCenterPointF.x + mLineWidth + mLineRadiusWidth,
+                        mCenterPointF.y + mLineRadiusWidth +
                                 (mTextViewRects[mTextViewRects.length - 1].bottom - mCenterPointF.y));
                 break;
         }
     }
 
     private void setTypeOneLeftTextViewRect() {
-        mTextViews[0].setGravity(Gravity.RIGHT);
-        int measuredWidth = mTextViews[0].getMeasuredWidth();
-        int measuredHeight = mTextViews[0].getMeasuredHeight() / mTextViews[0].getLineCount();
+        TextView textView = mTextViews[0];
+        textView.setGravity(Gravity.RIGHT);
+        int measuredWidth = textView.getMeasuredWidth();
+        int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
+
+        Rect textViewRect = mTextViewRects[0];
 
         // TODO: 16/8/30 可以采用这种方式的边界判断  可能会减少部分代码
 //        mTextViewRects[0].set(0, 0, measuredWidth, measuredHeight);
@@ -297,26 +303,30 @@ public class ImageTagViewGroup extends ViewGroup {
                     (mViewGroupRect.right - mOutCircleRadius) : (mCenterPointF.x + reviseWidth);
         }
         float maxWidth = getTextMaxWidthDirectionLeft();
-        mTextViewRects[0].left = reviseWidth > 0 ? mViewGroupRect.left : (int) (maxWidth - measuredWidth);
-        mTextViewRects[0].right = (int) maxWidth;
+        textViewRect.left = reviseWidth > 0 ? mViewGroupRect.left : (int) (maxWidth - measuredWidth);
+        textViewRect.right = (int) maxWidth;
 
-        mTextViewRects[0].bottom = (int) (mCenterPointF.y +
+        textViewRect.bottom = (int) (mCenterPointF.y +
                 measuredHeight * (reviseWidth > 0 ? Math.ceil(measuredWidth / maxWidth) : 1));
 
-        if (mTextViewRects[0].bottom > mViewGroupRect.bottom) {
-            int reviseHeight = mTextViewRects[0].bottom - mViewGroupRect.bottom;
-            mTextViewRects[0].bottom = mViewGroupRect.bottom;
+        if (textViewRect.bottom > mViewGroupRect.bottom) {
+            int reviseHeight = textViewRect.bottom - mViewGroupRect.bottom;
+            textViewRect.bottom = mViewGroupRect.bottom;
             mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mViewGroupRect.top ?
                     (mViewGroupRect.top + mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
         }
-        mTextViewRects[0].top = (int) mCenterPointF.y;
+        textViewRect.top = (int) mCenterPointF.y;
     }
 
     private void setTypeOneRightTextViewRect() {
-        mTextViews[0].setGravity(Gravity.LEFT);
+        TextView textView = mTextViews[0];
+        textView.setGravity(Gravity.LEFT);
         //如果超出屏幕 此时会自动换行
-        int measuredWidth = mTextViews[0].getMeasuredWidth();
-        int measuredHeight = mTextViews[0].getMeasuredHeight() / mTextViews[0].getLineCount();
+        int measuredWidth = textView.getMeasuredWidth();
+        int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
+
+        Rect textViewRect = mTextViewRects[0];
+
         float reviseWidth = measuredWidth - getTextMaxWidthDirectionRight();
 
         if (reviseWidth > 0) {
@@ -324,21 +334,21 @@ public class ImageTagViewGroup extends ViewGroup {
                     (mViewGroupRect.left + mOutCircleRadius) : (mCenterPointF.x - reviseWidth);
         }
 
-        mTextViewRects[0].left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
-        mTextViewRects[0].right = (mTextViewRects[0].left + measuredWidth) > mViewGroupRect.right ?
-                mViewGroupRect.right : (mTextViewRects[0].left + measuredWidth);
+        textViewRect.left = (int) (mCenterPointF.x + mLineWidth + mLineRadiusWidth + mTextLinePadding);
+        textViewRect.right = (textViewRect.left + measuredWidth) > mViewGroupRect.right ?
+                mViewGroupRect.right : (textViewRect.left + measuredWidth);
 
-        mTextViewRects[0].bottom = (int) (mCenterPointF.y +
+        textViewRect.bottom = (int) (mCenterPointF.y +
                 measuredHeight * (reviseWidth > 0 ?
                         Math.ceil(measuredWidth / getTextMaxWidthDirectionRight()) : 1));
 
-        if (mTextViewRects[0].bottom > mViewGroupRect.bottom) {
-            int reviseHeight = mTextViewRects[0].bottom - mViewGroupRect.bottom;
-            mTextViewRects[0].bottom = mViewGroupRect.bottom;
+        if (textViewRect.bottom > mViewGroupRect.bottom) {
+            int reviseHeight = textViewRect.bottom - mViewGroupRect.bottom;
+            textViewRect.bottom = mViewGroupRect.bottom;
             mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mViewGroupRect.top ?
                     (mViewGroupRect.top + mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
         }
-        mTextViewRects[0].top = (int) mCenterPointF.y;
+        textViewRect.top = (int) mCenterPointF.y;
     }
 
     private void setTypeMoreLeftTopTextViewRect() {
@@ -465,7 +475,7 @@ public class ImageTagViewGroup extends ViewGroup {
                         (mViewGroupRect.left + mOutCircleRadius) : (mCenterPointF.x - reviseWidth);
             }
 
-            textViewRect.left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
+            textViewRect.left = (int) (mCenterPointF.x + mLineWidth + mLineRadiusWidth + mTextLinePadding);
             textViewRect.right = (textViewRect.left + measuredWidth) > mViewGroupRect.right ?
                     mViewGroupRect.right : (textViewRect.left + measuredWidth);
 
@@ -518,7 +528,7 @@ public class ImageTagViewGroup extends ViewGroup {
                         (mViewGroupRect.left + mOutCircleRadius) : (mCenterPointF.x - reviseWidth);
             }
 
-            textViewRect.left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
+            textViewRect.left = (int) (mCenterPointF.x + mLineWidth + mLineRadiusWidth + mTextLinePadding);
             textViewRect.right = (textViewRect.left + measuredWidth) > mViewGroupRect.right ?
                     mViewGroupRect.right : (textViewRect.left + measuredWidth);
 
@@ -553,31 +563,31 @@ public class ImageTagViewGroup extends ViewGroup {
     }
 
     private float getTextMaxWidthDirectionRight() {
-        return mViewGroupRect.right - mCenterPointF.x - lineWidth - lineRadiusWidth - textLinePadding;
+        return mViewGroupRect.right - mCenterPointF.x - mLineWidth - mLineRadiusWidth - mTextLinePadding;
     }
 
     private float getTextMaxWidthDirectionLeft() {
-        return mCenterPointF.x - lineWidth - lineRadiusWidth - textLinePadding;
+        return mCenterPointF.x - mLineWidth - mLineRadiusWidth - mTextLinePadding;
     }
 
     private int getTextViewRectBottomDirectionTop(int index) {
-        int height = lineRadiusWidth;
+        int height = mLineRadiusWidth;
         if (index < mTextViewRects.length) {
             for (int i = mTextViewRects.length - 1; i > index; i--) {
                 height = height + mTextViewRects[i].height();
             }
-            height = height + textLinePadding * (mTextViewRects.length - index);
+            height = height + mTextLinePadding * (mTextViewRects.length - index);
         }
         return height;
     }
 
     private int getTextViewRectTopDirectionBottom(int index) {
-        int height = lineRadiusWidth;
+        int height = mLineRadiusWidth;
         if (index < mTextViewRects.length) {
             for (int i = 0; i < index; i++) {
                 height = height + mTextViewRects[i].height();
             }
-            height = height + textLinePadding * index;
+            height = height + mTextLinePadding * index;
         }
         return height;
     }
@@ -633,9 +643,11 @@ public class ImageTagViewGroup extends ViewGroup {
             mTextViewRects[i] = new Rect();
 
             mTextViews[i] = new TextView(getContext());
-            mTextViews[i].setTextSize(textSize);
-            mTextViews[i].setTextColor(textColor);
+            mTextViews[i].setTextSize(mTextSize);
+            mTextViews[i].setTextColor(mTextColor);
             mTextViews[i].setIncludeFontPadding(false);
+            mTextViews[i].setLineSpacing(mTextLineSpacingExtra, 1.0f);
+            mTextViews[i].setShadowLayer(1f, 0, 0, mTextShadowColor);
 
             mTextViews[i].setText(tagContents.get(i));
             addView(mTextViews[i]);
