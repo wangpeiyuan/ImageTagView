@@ -265,6 +265,20 @@ public class ImageTagViewGroup extends ViewGroup {
                  *       |
                  *       |
                  */
+                setTypeMoreRightBottomTextViewRect();
+
+                mLinePath.moveTo(mCenterPointF.x, mCenterPointF.y);
+                mLinePath.lineTo(mCenterPointF.x + lineWidth, mCenterPointF.y);
+
+                rectF = new RectF(mCenterPointF.x + lineWidth - lineRadiusWidth, mCenterPointF.y,
+                        mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y + lineRadiusWidth * 2);
+                mLinePath.addArc(rectF, 270, 90);
+
+                mLinePath.moveTo(mCenterPointF.x + lineWidth + lineRadiusWidth, mCenterPointF.y + lineRadiusWidth);
+
+                mLinePath.lineTo(mCenterPointF.x + lineWidth + lineRadiusWidth,
+                        mCenterPointF.y + lineRadiusWidth +
+                                (mTextViewRects[mTextViewRects.length - 1].bottom - mCenterPointF.y));
                 break;
         }
     }
@@ -485,6 +499,59 @@ public class ImageTagViewGroup extends ViewGroup {
         }
     }
 
+    private void setTypeMoreRightBottomTextViewRect() {
+        for (int i = 0; i < mTextViews.length; i++) {
+            TextView textView = mTextViews[i];
+            textView.setGravity(Gravity.LEFT);
+            int measuredWidth = textView.getMeasuredWidth();
+            int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
+
+            Rect textViewRect = mTextViewRects[i];
+
+            float reviseWidth = measuredWidth - getTextMaxWidthDirectionRight();
+
+            float oldX = mCenterPointF.x;
+            float oldY = mCenterPointF.y;
+
+            if (reviseWidth > 0) {
+                mCenterPointF.x = (mCenterPointF.x - reviseWidth) <= mViewGroupRect.left ?
+                        (mViewGroupRect.left + mOutCircleRadius) : (mCenterPointF.x - reviseWidth);
+            }
+
+            textViewRect.left = (int) (mCenterPointF.x + lineWidth + lineRadiusWidth + textLinePadding);
+            textViewRect.right = (textViewRect.left + measuredWidth) > mViewGroupRect.right ?
+                    mViewGroupRect.right : (textViewRect.left + measuredWidth);
+
+            if (mCenterPointF.x < oldX) {//移动其他的左右边界
+                for (int j = i + 1; j < mTextViews.length; j++) {
+                    int width = mTextViewRects[j].width();
+                    mTextViewRects[j].left = textViewRect.left;
+                    mTextViewRects[j].right = textViewRect.left + width;
+                }
+            }
+
+            int textViewRectTop = getTextViewRectTopDirectionBottom(i);
+            textViewRect.bottom = (int) ((mCenterPointF.y + textViewRectTop) +
+                    measuredHeight * (reviseWidth > 0 ? Math.ceil(measuredWidth / getTextMaxWidthDirectionRight()) : 1));
+
+            if (textViewRect.bottom > mViewGroupRect.bottom) {
+                int reviseHeight = textViewRect.bottom - mViewGroupRect.bottom;
+                textViewRect.bottom = mViewGroupRect.bottom;
+                mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mViewGroupRect.top ?
+                        (mViewGroupRect.top + mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
+            }
+            textViewRect.top = (int) (mCenterPointF.y + textViewRectTop);
+
+            if (mCenterPointF.y < oldY) {
+                float reviseHeight = oldY - mCenterPointF.y;
+                for (int y = i - 1; y >= 0; y--) {
+                    mTextViewRects[y].top = (int) (mTextViewRects[y].top - reviseHeight);
+                    mTextViewRects[y].bottom = (int) (mTextViewRects[y].bottom - reviseHeight);
+                }
+            }
+        }
+    }
+
     private float getTextMaxWidthDirectionRight() {
         return mViewGroupRect.right - mCenterPointF.x - lineWidth - lineRadiusWidth - textLinePadding;
     }
@@ -589,7 +656,7 @@ public class ImageTagViewGroup extends ViewGroup {
         strings.add("16768 数字");
         strings.add("This is a test");
 
-        addTags(new PointF(x, y), strings, TYPE_MORE_RIGHT_TOP);
+        addTags(new PointF(x, y), strings, TYPE_MORE_RIGHT_BOTTOM);
     }
 
     /**
