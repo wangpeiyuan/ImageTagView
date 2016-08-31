@@ -216,7 +216,6 @@ public class ImageTagViewGroup extends ViewGroup {
 
                 mLinePath.lineTo(mCenterPointF.x - lineWidth - lineRadiusWidth,
                         mCenterPointF.y - lineRadiusWidth - (mCenterPointF.y - mTextViewRects[0].top));
-
                 break;
             case TYPE_MORE_LEFT_BOTTOM:
                 /**
@@ -477,6 +476,7 @@ public class ImageTagViewGroup extends ViewGroup {
                     mTextViewRects[j].right = textViewRect.left + width;
                 }
             }
+
             int textViewRectBottom = getTextViewRectBottomDirectionTop(i);
             textViewRect.top = (int) ((mCenterPointF.y - textViewRectBottom) -
                     measuredHeight * (reviseWidth > 0 ? Math.ceil(measuredWidth / getTextMaxWidthDirectionRight()) : 1));
@@ -656,7 +656,7 @@ public class ImageTagViewGroup extends ViewGroup {
         strings.add("16768 数字");
         strings.add("This is a test");
 
-        addTags(new PointF(x, y), strings, TYPE_MORE_RIGHT_BOTTOM);
+        addTags(new PointF(x, y), strings);
     }
 
     /**
