@@ -627,12 +627,22 @@ public class ImageTagViewGroup extends ViewGroup {
         return mTextViews == null || mTextViews.length < 1;
     }
 
+    private void checkType(int type) {
+        if (TYPE_NONE != type &&
+                TYPE_ONE_LEFT != type && TYPE_ONE_RIGHT != type &&
+                TYPE_MORE_LEFT_TOP != type && TYPE_MORE_LEFT_BOTTOM != type &&
+                TYPE_MORE_RIGHT_TOP != type && TYPE_MORE_RIGHT_BOTTOM != type) {
+            throw new IllegalArgumentException("This type is not supported.");
+        }
+    }
+
     public void addTags(PointF centerPointF, List<String> tagContents) {
         addTags(centerPointF, tagContents, TYPE_NONE);
     }
 
     public void addTags(PointF centerPointF, List<String> tagContents, int type) {
         if (centerPointF == null || tagContents == null || tagContents.isEmpty()) return;
+        checkType(type);
         mCenterPointF.set(centerPointF);
         mCurrentType = type;
 
