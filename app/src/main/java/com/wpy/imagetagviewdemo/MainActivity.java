@@ -71,7 +71,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTagEdit(int index) {
                 mTestTagContent.updateTest();
-                imageTagViewGroup.updateTag(mTestTagContent, index);
+                if (mTestTagContent.mTagContentList.isEmpty()) {
+                    Toast.makeText(MainActivity.this, "delete " + index, Toast.LENGTH_SHORT).show();
+                    imageTagViewGroup.removeTagChild(index);
+                    mTestTagContent = null;
+                } else {
+                    imageTagViewGroup.updateTag(mTestTagContent, index);
+                }
             }
 
             @Override
