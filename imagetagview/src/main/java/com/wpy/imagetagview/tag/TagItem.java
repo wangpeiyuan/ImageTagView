@@ -194,7 +194,7 @@ public class TagItem {
 
     private void setTypeOneLeftTextViewRect() {
         TextView textView = mTextViews[0];
-        textView.setGravity(Gravity.RIGHT);
+        textView.setGravity(Gravity.END);
         int measuredWidth = textView.getMeasuredWidth();
         int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
 
@@ -213,8 +213,9 @@ public class TagItem {
         textViewRect.left = reviseWidth > 0 ? mFactor.mViewGroupRect.left : (int) (maxWidth - measuredWidth);
         textViewRect.right = (int) maxWidth;
 
-        textViewRect.bottom = (int) (mCenterPointF.y +
-                measuredHeight * (reviseWidth > 0 ? Math.ceil(measuredWidth / maxWidth) : 1));
+        double contentHeight = measuredHeight * (reviseWidth > 0 ? Math.ceil(measuredWidth / maxWidth) : 1);
+
+        textViewRect.bottom = (int) (mCenterPointF.y + contentHeight / 2);
 
         if (textViewRect.bottom > mFactor.mViewGroupRect.bottom) {
             int reviseHeight = textViewRect.bottom - mFactor.mViewGroupRect.bottom;
@@ -222,12 +223,19 @@ public class TagItem {
             mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mFactor.mViewGroupRect.top ?
                     (mFactor.mViewGroupRect.top + mFactor.mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
         }
-        textViewRect.top = (int) mCenterPointF.y;
+        textViewRect.top = (int) (mCenterPointF.y - contentHeight / 2);
+
+        if (textViewRect.top < mFactor.mViewGroupRect.top) {
+            int reviseH = mFactor.mViewGroupRect.top - textViewRect.top;
+            mCenterPointF.y = mCenterPointF.y + reviseH;
+            textViewRect.top = textViewRect.top + reviseH;
+            textViewRect.bottom = textViewRect.bottom + reviseH;
+        }
     }
 
     private void setTypeOneRightTextViewRect() {
         TextView textView = mTextViews[0];
-        textView.setGravity(Gravity.LEFT);
+        textView.setGravity(Gravity.START);
         //如果超出屏幕 此时会自动换行
         int measuredWidth = textView.getMeasuredWidth();
         int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
@@ -245,9 +253,10 @@ public class TagItem {
         textViewRect.right = (textViewRect.left + measuredWidth) > mFactor.mViewGroupRect.right ?
                 mFactor.mViewGroupRect.right : (textViewRect.left + measuredWidth);
 
-        textViewRect.bottom = (int) (mCenterPointF.y +
-                measuredHeight * (reviseWidth > 0 ?
-                        Math.ceil(measuredWidth / getTextMaxWidthDirectionRight()) : 1));
+        double contentHeight = measuredHeight * (reviseWidth > 0 ?
+                Math.ceil(measuredWidth / getTextMaxWidthDirectionRight()) : 1);
+
+        textViewRect.bottom = (int) (mCenterPointF.y + contentHeight / 2);
 
         if (textViewRect.bottom > mFactor.mViewGroupRect.bottom) {
             int reviseHeight = textViewRect.bottom - mFactor.mViewGroupRect.bottom;
@@ -255,13 +264,20 @@ public class TagItem {
             mCenterPointF.y = (mCenterPointF.y - reviseHeight) <= mFactor.mViewGroupRect.top ?
                     (mFactor.mViewGroupRect.top + mFactor.mOutCircleRadius) : (mCenterPointF.y - reviseHeight);
         }
-        textViewRect.top = (int) mCenterPointF.y;
+        textViewRect.top = (int) (mCenterPointF.y - contentHeight / 2);
+
+        if (textViewRect.top < mFactor.mViewGroupRect.top) {
+            int reviseH = mFactor.mViewGroupRect.top - textViewRect.top;
+            mCenterPointF.y = mCenterPointF.y + reviseH;
+            textViewRect.top = textViewRect.top + reviseH;
+            textViewRect.bottom = textViewRect.bottom + reviseH;
+        }
     }
 
     private void setTypeMoreLeftTopTextViewRect() {
         for (int i = mTextViews.length - 1; i >= 0; i--) {
             TextView textView = mTextViews[i];
-            textView.setGravity(Gravity.RIGHT);
+            textView.setGravity(Gravity.END);
             int measuredWidth = textView.getMeasuredWidth();
             int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
 
@@ -313,7 +329,7 @@ public class TagItem {
     private void setTypeMoreLeftBottomTextViewRect() {
         for (int i = 0; i < mTextViews.length; i++) {
             TextView textView = mTextViews[i];
-            textView.setGravity(Gravity.RIGHT);
+            textView.setGravity(Gravity.END);
             int measuredWidth = textView.getMeasuredWidth();
             int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
 
@@ -366,7 +382,7 @@ public class TagItem {
     private void setTypeMoreRightTopTextViewRect() {
         for (int i = mTextViews.length - 1; i >= 0; i--) {
             TextView textView = mTextViews[i];
-            textView.setGravity(Gravity.LEFT);
+            textView.setGravity(Gravity.START);
             int measuredWidth = textView.getMeasuredWidth();
             int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
 
@@ -419,7 +435,7 @@ public class TagItem {
     private void setTypeMoreRightBottomTextViewRect() {
         for (int i = 0; i < mTextViews.length; i++) {
             TextView textView = mTextViews[i];
-            textView.setGravity(Gravity.LEFT);
+            textView.setGravity(Gravity.START);
             int measuredWidth = textView.getMeasuredWidth();
             int measuredHeight = textView.getMeasuredHeight() / textView.getLineCount();
 
@@ -553,6 +569,12 @@ public class TagItem {
 
             mTextViews[i].setText(tagContents.get(i));
             viewGroup.addView(mTextViews[i]);
+        }
+    }
+
+    public void removeTagView(ViewGroup viewGroup) {
+        for (TextView textView : mTextViews) {
+            viewGroup.removeView(textView);
         }
     }
 }

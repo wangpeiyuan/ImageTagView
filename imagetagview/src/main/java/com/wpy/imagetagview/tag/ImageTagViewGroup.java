@@ -103,13 +103,16 @@ public class ImageTagViewGroup extends ViewGroup {
     }
 
     public void removeTagChild(int index) {
+        if (index < 0 || index >= mTagItems.size()) return;
+        mTagItems.get(index).removeTagView(this);
         mTagItems.remove(index);
-        removeViewAt(index);
     }
 
     public void removeAllTag() {
+        for (TagItem tagItem : mTagItems) {
+            tagItem.removeTagView(this);
+        }
         mTagItems.clear();
-        removeAllViews();
     }
 
     private void addTest(float x, float y) {
