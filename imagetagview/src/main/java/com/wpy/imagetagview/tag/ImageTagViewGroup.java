@@ -56,6 +56,7 @@ public class ImageTagViewGroup extends ViewGroup {
         measureChildren(widthMeasureSpec, heightMeasureSpec);
 
         for (TagItem tagItem : mTagItems) {
+            if (tagItem.isEmpty()) continue;
             tagItem.checkCenterBorder();
             tagItem.checkAndSelectTypeWhenNone();
             tagItem.setTextViewRectAndPath();
@@ -103,6 +104,10 @@ public class ImageTagViewGroup extends ViewGroup {
         TagItem tagItem = new TagItem(mTagFactor);
         tagItem.addTags(ImageTagViewGroup.this, tagContent.getCenterPointF(), tagContent.getTagItemContent(), type);
         mTagItems.add(tagItem);
+    }
+
+    public void updateTag(TagContent tagContent, int index) {
+        mTagItems.get(index).updateTag(ImageTagViewGroup.this, tagContent.getTagItemContent());
     }
 
     public void removeTagChild(int index) {
@@ -166,7 +171,9 @@ public class ImageTagViewGroup extends ViewGroup {
                     mTagGroupClickListener.onTypeChange(mTagItems.indexOf(mCurrentClickTagItem), changeType);
                 }
             } else if (mCurrentClickTagItem.isClickInText((int) x, (int) y)) {
-                // TODO: 16/9/1 编辑
+                if (mTagGroupClickListener != null) {
+                    mTagGroupClickListener.onTagEdit(mTagItems.indexOf(mCurrentClickTagItem));
+                }
             }
             return true;
         }

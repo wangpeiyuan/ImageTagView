@@ -524,7 +524,7 @@ public class TagItem {
         return height;
     }
 
-    private boolean isEmpty() {
+    public boolean isEmpty() {
         return mTextViews == null || mTextViews.length < 1;
     }
 

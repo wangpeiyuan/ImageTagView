@@ -9,5 +9,7 @@ public interface TagGroupClickListener {
 
     void onTypeChange(int index, int type);
 
+    void onTagEdit(int index);
+
     void onTagLongClick(int index);
 }
