@@ -1,6 +1,8 @@
-package com.wpy.imagetagview.tag;
+package com.wpy.imagetagviewdemo;
 
 import android.graphics.PointF;
+
+import com.wpy.imagetagview.tag.TagContent;
 
 import java.util.ArrayList;
 import java.util.List;

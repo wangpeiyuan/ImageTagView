@@ -2,9 +2,12 @@ package com.wpy.imagetagviewdemo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.wpy.imagetagview.tag.ImageTagViewGroup;
+import com.wpy.imagetagview.tag.TagGroupClickListener;
 import com.wpy.imagetagview.tag.other.SetTagGroupView;
 import com.wpy.imagetagview.tag.other.TagClickListener;
 
@@ -13,9 +16,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
+
     private SetTagGroupView tagGroupView;
     private List<TagInfo> mList;
     private int mAddCount = 0;
+
+    private ImageTagViewGroup imageTagViewGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +55,32 @@ public class MainActivity extends AppCompatActivity {
         });
 
         addTest();
+
+        imageTagViewGroup = (ImageTagViewGroup) findViewById(R.id.imageTagViewGroup);
+        imageTagViewGroup.setOnTagGroupClickListener(new TagGroupClickListener() {
+            @Override
+            public void onClick(float x, float y) {
+                addTest(x, y);
+            }
+
+            @Override
+            public void onTypeChange(int index, int type) {
+                Log.d(TAG, "onTypeChange: index = " + index + " type = " + type);
+            }
+
+            @Override
+            public void onTagLongClick(int index) {
+                Toast.makeText(MainActivity.this, "delete " + index, Toast.LENGTH_SHORT).show();
+                imageTagViewGroup.removeTagChild(index);
+            }
+        });
+    }
+
+
+    private void addTest(float x, float y) {
+        TestTagContent testTagContent = new TestTagContent();
+        testTagContent.addTest(x, y);
+        imageTagViewGroup.addTag(testTagContent);
     }
 
     private void addTest() {
