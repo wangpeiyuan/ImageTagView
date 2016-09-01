@@ -3,7 +3,7 @@ package com.wpy.imagetagview.tag;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
@@ -19,8 +19,12 @@ public class ImageTagViewGroup extends ViewGroup {
     private static final String TAG = "ImageTagViewGroup";
 
     private TagFactor mTagFactor;
-
     private List<TagItem> mTagItems;
+
+    private GestureDetector mGestureDetector;
+    private TagItem mCurrentClickTagItem = null;
+    private boolean mCanTouch = true;
+    private TagGroupClickListener mTagGroupClickListener;
 
     public ImageTagViewGroup(Context context) {
         this(context, null);
@@ -39,6 +43,7 @@ public class ImageTagViewGroup extends ViewGroup {
         setWillNotDraw(false);//如果 ViewGroup 没有设置背景的话 需要设置成 false 否则 onDraw() 不会执行
         mTagFactor = new TagFactor(getContext());
         mTagItems = new ArrayList<>();
+        mGestureDetector = new GestureDetector(getContext(), new TagGroupGestureListener());
     }
 
     @Override
@@ -46,7 +51,7 @@ public class ImageTagViewGroup extends ViewGroup {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (isEmpty()) return;
         getDrawingRect(mTagFactor.mViewGroupRect);
-        Log.d(TAG, "onMeasure: " + mTagFactor.mViewGroupRect.toString());
+//        Log.d(TAG, "onMeasure: " + mTagFactor.mViewGroupRect.toString());
 
         measureChildren(widthMeasureSpec, heightMeasureSpec);
 
@@ -65,7 +70,6 @@ public class ImageTagViewGroup extends ViewGroup {
         }
     }
 
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -78,7 +82,6 @@ public class ImageTagViewGroup extends ViewGroup {
     private boolean isEmpty() {
         return mTagItems == null || mTagItems.isEmpty();
     }
-
 
     public void addTags(List<TagContent> tagContents) {
         addTags(tagContents, TagFactor.TYPE_NONE);
@@ -98,35 +101,91 @@ public class ImageTagViewGroup extends ViewGroup {
 
     public void addTag(TagContent tagContent, int type) {
         TagItem tagItem = new TagItem(mTagFactor);
-        tagItem.addTags(this, tagContent.getCenterPointF(), tagContent.getTagItemContent(), type);
+        tagItem.addTags(ImageTagViewGroup.this, tagContent.getCenterPointF(), tagContent.getTagItemContent(), type);
         mTagItems.add(tagItem);
     }
 
     public void removeTagChild(int index) {
         if (index < 0 || index >= mTagItems.size()) return;
-        mTagItems.get(index).removeTagView(this);
+        mTagItems.get(index).removeTagView(ImageTagViewGroup.this);
         mTagItems.remove(index);
     }
 
     public void removeAllTag() {
         for (TagItem tagItem : mTagItems) {
-            tagItem.removeTagView(this);
+            tagItem.removeTagView(ImageTagViewGroup.this);
         }
         mTagItems.clear();
     }
 
-    private void addTest(float x, float y) {
-        TestTagContent testTagContent = new TestTagContent();
-        testTagContent.addTest(x, y);
-        addTag(testTagContent);
-    }
-
     /**
-     * todo 点击事件处理
+     * 点击事件处理
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        addTest(event.getX(), event.getY());
+        if (mCanTouch) {
+            return mGestureDetector.onTouchEvent(event);
+        }
         return super.onTouchEvent(event);
+    }
+
+    public void setCanTouch(boolean canTouch) {
+        this.mCanTouch = canTouch;
+    }
+
+    public void setOnTagGroupClickListener(TagGroupClickListener listener) {
+        mTagGroupClickListener = listener;
+    }
+
+    public class TagGroupGestureListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            int x = (int) e.getX();
+            int y = (int) e.getY();
+            mCurrentClickTagItem = null;
+            for (TagItem tagItem : mTagItems) {
+                if (tagItem.isClickInTag(x, y)) {
+                    mCurrentClickTagItem = tagItem;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            float x = e.getX();
+            float y = e.getY();
+            if (mCurrentClickTagItem == null) {
+                if (mTagGroupClickListener != null) {
+                    mTagGroupClickListener.onClick(x, y);
+                }
+            } else if (mCurrentClickTagItem.isClickInCircle((int) x, (int) y)) {
+                int changeType = mCurrentClickTagItem.getCanChangeType(true);
+                mCurrentClickTagItem.changeType(ImageTagViewGroup.this, changeType);
+                if (mTagGroupClickListener != null) {
+                    mTagGroupClickListener.onTypeChange(mTagItems.indexOf(mCurrentClickTagItem), changeType);
+                }
+            } else if (mCurrentClickTagItem.isClickInText((int) x, (int) y)) {
+                // TODO: 16/9/1 编辑
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (mCurrentClickTagItem != null) {
+                mCurrentClickTagItem.moveTo(ImageTagViewGroup.this, distanceX, distanceY);
+            }
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (mCurrentClickTagItem != null) {
+                if (mTagGroupClickListener != null) {
+                    mTagGroupClickListener.onTagLongClick(mTagItems.indexOf(mCurrentClickTagItem));
+                }
+            }
+        }
     }
 }
