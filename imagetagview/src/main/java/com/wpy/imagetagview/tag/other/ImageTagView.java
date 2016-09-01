@@ -1,4 +1,4 @@
-package com.wpy.imagetagview.tag;
+package com.wpy.imagetagview.tag.other;
 
 import android.content.Context;
 import android.graphics.Canvas;

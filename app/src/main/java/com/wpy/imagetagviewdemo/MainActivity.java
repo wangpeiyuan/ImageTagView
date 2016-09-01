@@ -5,8 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
-import com.wpy.imagetagview.tag.SetTagGroupView;
-import com.wpy.imagetagview.tag.TagClickListener;
+import com.wpy.imagetagview.tag.other.SetTagGroupView;
+import com.wpy.imagetagview.tag.other.TagClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
