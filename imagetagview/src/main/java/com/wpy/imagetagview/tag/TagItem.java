@@ -31,9 +31,18 @@ public class TagItem {
 
     private TagFactor mFactor;
 
+    //用来判断点击区间
+    private Rect mTextRect;//文字的区间
+    private Rect mCircleRect;//圆点的区间  有一定的扩大
+    private Rect mTagRect;//整个标签的区域 包含文字和圆点
+
     public TagItem(TagFactor factor) {
         mFactor = factor;
         mLinePath = new Path();
+
+        mTextRect = new Rect();
+        mCircleRect = new Rect();
+        mTagRect = new Rect();
     }
 
     /**
@@ -521,13 +530,41 @@ public class TagItem {
 
     public void onLayout() {
         if (isEmpty()) return;
+        mTextRect.setEmpty();
+        mCircleRect.setEmpty();
+        mTagRect.setEmpty();
         for (int i = 0; i < mTextViews.length; i++) {
-            Log.d(TAG, "onLayout: mTextViewRect[" + i + "] = " + mTextViewRects[i].toString());
-            mTextViews[i].measure(View.MeasureSpec.makeMeasureSpec(mTextViewRects[i].width(), View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(mTextViewRects[i].height(), View.MeasureSpec.EXACTLY));
-            mTextViews[i].layout(mTextViewRects[i].left, mTextViewRects[i].top,
-                    mTextViewRects[i].right, mTextViewRects[i].bottom);
+            Rect textViewRect = mTextViewRects[i];
+            Log.d(TAG, "onLayout: mTextViewRect[" + i + "] = " + textViewRect.toString());
+            mTextViews[i].measure(View.MeasureSpec.makeMeasureSpec(textViewRect.width(), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(textViewRect.height(), View.MeasureSpec.EXACTLY));
+            mTextViews[i].layout(textViewRect.left, textViewRect.top,
+                    textViewRect.right, textViewRect.bottom);
+
+            if (mTextRect.isEmpty()) {
+                mTextRect.set(textViewRect);
+            } else {
+                mTextRect.left = textViewRect.left < mTextRect.left ? textViewRect.left : mTextRect.left;
+                mTextRect.top = textViewRect.top < mTextRect.top ? textViewRect.top : mTextRect.top;
+                mTextRect.right = textViewRect.right > mTextRect.right ? textViewRect.right : mTextRect.right;
+                mTextRect.bottom = textViewRect.bottom > mTextRect.bottom ? textViewRect.bottom : mTextRect.bottom;
+            }
         }
+
+        int add = mFactor.mOutCircleRadius * 2;
+        mCircleRect.left = (int) (mCenterPointF.x - add);
+        mCircleRect.top = (int) (mCenterPointF.y - add);
+        mCircleRect.right = (int) (mCenterPointF.x + add);
+        mCircleRect.bottom = (int) (mCenterPointF.y + add);
+
+        mTagRect.left = mCircleRect.left < mTextRect.left ? mCircleRect.left : mTextRect.left;
+        mTagRect.top = mCircleRect.top < mTextRect.top ? mCircleRect.top : mTextRect.top;
+        mTagRect.right = mCircleRect.right > mTextRect.right ? mCircleRect.right : mTextRect.right;
+        mTagRect.bottom = mCircleRect.bottom > mTextRect.bottom ? mCircleRect.bottom : mTextRect.bottom;
+
+        Log.d(TAG, "onLayout: mCircleRect = " + mCircleRect.toString());
+        Log.d(TAG, "onLayout: mTextRect = " + mTextRect.toString());
+        Log.d(TAG, "onLayout: mTagRect = " + mTagRect.toString());
     }
 
     public void onDraw(Canvas canvas) {
@@ -576,5 +613,36 @@ public class TagItem {
         for (TextView textView : mTextViews) {
             viewGroup.removeView(textView);
         }
+    }
+
+    public boolean isClickInTag(int x, int y) {
+        return mTextRect.contains(x, y) || mCircleRect.contains(x, y);
+    }
+
+    public boolean isClickInCircle(int x, int y) {
+        return mCircleRect.contains(x, y);
+    }
+
+    public boolean isClickInText(int x, int y) {
+        return mTextRect.contains(x, y);
+    }
+
+    // FIXME: 16/9/1 圆点移到边界会有闪动
+    public void moveTo(ViewGroup viewGroup, float distanceX, float distanceY) {
+        if (distanceX == 0 && distanceY == 0) return;
+        float targetX = mCenterPointF.x - distanceX;
+        float targetY = mCenterPointF.y - distanceY;
+        if (targetX + mFactor.mOutCircleRadius <= mFactor.mViewGroupRect.right &&
+                targetX - mFactor.mOutCircleRadius >= mFactor.mViewGroupRect.left) {
+            Log.d(TAG, "moveTo: X " + mCenterPointF.x + " -> " + targetX + " ");
+            mCenterPointF.x = targetX;
+        }
+        if (targetY + mFactor.mOutCircleRadius <= mFactor.mViewGroupRect.bottom &&
+                targetY - mFactor.mOutCircleRadius >= mFactor.mViewGroupRect.top) {
+            Log.d(TAG, "moveTo: Y " + mCenterPointF.y + " -> " + targetY + " ");
+            mCenterPointF.y = targetY;
+        }
+        viewGroup.requestLayout();
+        viewGroup.postInvalidate();
     }
 }
