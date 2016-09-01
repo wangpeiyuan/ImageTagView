@@ -609,6 +609,13 @@ public class TagItem {
         }
     }
 
+    public void updateTag(ViewGroup viewGroup, List<String> tagContents) {
+        removeTagView(viewGroup);
+        mTextViews = null;
+        mTextViewRects = null;
+        addTags(viewGroup, mCenterPointF, tagContents);
+    }
+
     public void removeTagView(ViewGroup viewGroup) {
         for (TextView textView : mTextViews) {
             viewGroup.removeView(textView);
@@ -644,5 +651,73 @@ public class TagItem {
         }
         viewGroup.requestLayout();
         viewGroup.postInvalidate();
+    }
+
+    public void changeType(ViewGroup viewGroup, int type) {
+        if (type == mCurrentType) return;
+        mCurrentType = type;
+        viewGroup.requestLayout();
+        viewGroup.postInvalidate();
+    }
+
+    /**
+     * 获取可以变换的类型 顺时针变换
+     *
+     * @param forceChange 强制转换 使用这个会使得圆点坐标变换
+     */
+    public int getCanChangeType(boolean forceChange) {
+        int type = mCurrentType;
+
+        switch (mCurrentType) {
+            case TagFactor.TYPE_ONE_LEFT:
+                if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
+                        (mCircleRect.left - mTextRect.left) || forceChange) {
+                    type = TagFactor.TYPE_ONE_RIGHT;
+                }
+                break;
+            case TagFactor.TYPE_ONE_RIGHT:
+                if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
+                        (mTextRect.right - mCircleRect.right) || forceChange) {
+                    type = TagFactor.TYPE_ONE_LEFT;
+                }
+                break;
+            case TagFactor.TYPE_MORE_LEFT_TOP:
+                if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
+                        (mCircleRect.left - mTextRect.left) || forceChange) {
+                    type = TagFactor.TYPE_MORE_RIGHT_TOP;
+                } else if ((mFactor.mViewGroupRect.bottom - mTextRect.bottom) >=
+                        mTextRect.height()) {
+                    type = TagFactor.TYPE_MORE_LEFT_BOTTOM;
+                }
+                break;
+            case TagFactor.TYPE_MORE_LEFT_BOTTOM:
+                if ((mTextRect.top - mFactor.mViewGroupRect.top) >=
+                        mTextRect.height() || forceChange) {
+                    type = TagFactor.TYPE_MORE_LEFT_TOP;
+                } else if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
+                        (mCircleRect.left - mTextRect.left)) {
+                    type = TagFactor.TYPE_MORE_RIGHT_BOTTOM;
+                }
+                break;
+            case TagFactor.TYPE_MORE_RIGHT_TOP:
+                if ((mFactor.mViewGroupRect.bottom - mTextRect.bottom) >=
+                        mTextRect.height() || forceChange) {
+                    type = TagFactor.TYPE_MORE_RIGHT_BOTTOM;
+                } else if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
+                        (mTextRect.right - mCircleRect.right)) {
+                    type = TagFactor.TYPE_MORE_LEFT_TOP;
+                }
+                break;
+            case TagFactor.TYPE_MORE_RIGHT_BOTTOM:
+                if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
+                        (mTextRect.right - mCircleRect.right) || forceChange) {
+                    type = TagFactor.TYPE_MORE_LEFT_BOTTOM;
+                } else if ((mTextRect.top - mFactor.mViewGroupRect.top) >=
+                        mTextRect.height()) {
+                    type = TagFactor.TYPE_MORE_RIGHT_TOP;
+                }
+                break;
+        }
+        return type;
     }
 }
