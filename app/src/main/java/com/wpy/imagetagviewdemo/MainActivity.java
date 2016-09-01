@@ -69,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onTagEdit(int index) {
+                mTestTagContent.updateTest();
+                imageTagViewGroup.updateTag(mTestTagContent, index);
+            }
+
+            @Override
             public void onTagLongClick(int index) {
                 Toast.makeText(MainActivity.this, "delete " + index, Toast.LENGTH_SHORT).show();
                 imageTagViewGroup.removeTagChild(index);
@@ -76,11 +82,14 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    TestTagContent mTestTagContent;
 
     private void addTest(float x, float y) {
-        TestTagContent testTagContent = new TestTagContent();
-        testTagContent.addTest(x, y);
-        imageTagViewGroup.addTag(testTagContent);
+        if (mTestTagContent == null) {
+            mTestTagContent = new TestTagContent();
+            mTestTagContent.addTest(x, y);
+            imageTagViewGroup.addTag(mTestTagContent);
+        }
     }
 
     private void addTest() {

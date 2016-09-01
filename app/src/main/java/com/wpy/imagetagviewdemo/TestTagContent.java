@@ -25,6 +25,10 @@ public class TestTagContent implements TagContent {
         mPointF = new PointF(x, y);
     }
 
+    public void updateTest() {
+        mTagContentList.remove(0);
+    }
+
     @Override
     public List<String> getTagItemContent() {
         return mTagContentList;
