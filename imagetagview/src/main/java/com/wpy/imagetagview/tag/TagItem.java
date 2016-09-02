@@ -670,20 +670,20 @@ public class TagItem {
 
         switch (mCurrentType) {
             case TagFactor.TYPE_ONE_LEFT:
-                if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
-                        (mCircleRect.left - mTextRect.left) || forceChange) {
+                if (forceChange || (mFactor.mViewGroupRect.right - mCircleRect.right) >=
+                        (mCircleRect.left - mTextRect.left)) {
                     type = TagFactor.TYPE_ONE_RIGHT;
                 }
                 break;
             case TagFactor.TYPE_ONE_RIGHT:
-                if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
-                        (mTextRect.right - mCircleRect.right) || forceChange) {
+                if (forceChange || (mCircleRect.left - mFactor.mViewGroupRect.left) >=
+                        (mTextRect.right - mCircleRect.right)) {
                     type = TagFactor.TYPE_ONE_LEFT;
                 }
                 break;
             case TagFactor.TYPE_MORE_LEFT_TOP:
-                if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
-                        (mCircleRect.left - mTextRect.left) || forceChange) {
+                if (forceChange || (mFactor.mViewGroupRect.right - mCircleRect.right) >=
+                        (mCircleRect.left - mTextRect.left)) {
                     type = TagFactor.TYPE_MORE_RIGHT_TOP;
                 } else if ((mFactor.mViewGroupRect.bottom - mTextRect.bottom) >=
                         mTextRect.height()) {
@@ -691,8 +691,8 @@ public class TagItem {
                 }
                 break;
             case TagFactor.TYPE_MORE_LEFT_BOTTOM:
-                if ((mTextRect.top - mFactor.mViewGroupRect.top) >=
-                        mTextRect.height() || forceChange) {
+                if (forceChange || (mTextRect.top - mFactor.mViewGroupRect.top) >=
+                        mTextRect.height()) {
                     type = TagFactor.TYPE_MORE_LEFT_TOP;
                 } else if ((mFactor.mViewGroupRect.right - mCircleRect.right) >=
                         (mCircleRect.left - mTextRect.left)) {
@@ -700,8 +700,8 @@ public class TagItem {
                 }
                 break;
             case TagFactor.TYPE_MORE_RIGHT_TOP:
-                if ((mFactor.mViewGroupRect.bottom - mTextRect.bottom) >=
-                        mTextRect.height() || forceChange) {
+                if (forceChange || (mFactor.mViewGroupRect.bottom - mTextRect.bottom) >=
+                        mTextRect.height()) {
                     type = TagFactor.TYPE_MORE_RIGHT_BOTTOM;
                 } else if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
                         (mTextRect.right - mCircleRect.right)) {
@@ -709,8 +709,8 @@ public class TagItem {
                 }
                 break;
             case TagFactor.TYPE_MORE_RIGHT_BOTTOM:
-                if ((mCircleRect.left - mFactor.mViewGroupRect.left) >=
-                        (mTextRect.right - mCircleRect.right) || forceChange) {
+                if (forceChange || (mCircleRect.left - mFactor.mViewGroupRect.left) >=
+                        (mTextRect.right - mCircleRect.right)) {
                     type = TagFactor.TYPE_MORE_LEFT_BOTTOM;
                 } else if ((mTextRect.top - mFactor.mViewGroupRect.top) >=
                         mTextRect.height()) {

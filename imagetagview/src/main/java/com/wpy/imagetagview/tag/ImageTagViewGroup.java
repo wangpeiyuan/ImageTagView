@@ -18,11 +18,11 @@ import java.util.List;
 public class ImageTagViewGroup extends ViewGroup {
     private static final String TAG = "ImageTagViewGroup";
 
-    private TagFactor mTagFactor;
-    private List<TagItem> mTagItems;
+    protected TagFactor mTagFactor;
+    protected List<TagItem> mTagItems;
 
     private GestureDetector mGestureDetector;
-    private TagItem mCurrentClickTagItem = null;
+    protected TagItem mCurrentClickTagItem = null;
     private boolean mCanTouch = true;
     private TagGroupClickListener mTagGroupClickListener;
 
