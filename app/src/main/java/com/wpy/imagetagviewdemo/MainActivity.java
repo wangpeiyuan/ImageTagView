@@ -78,12 +78,15 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     imageTagViewGroup.updateTag(mTestTagContent, index);
                 }
+                Toast.makeText(MainActivity.this, "stopAnim " + index, Toast.LENGTH_SHORT).show();
+                imageTagViewGroup.stopAnim();
             }
 
             @Override
             public void onTagLongClick(int index) {
-                Toast.makeText(MainActivity.this, "delete " + index, Toast.LENGTH_SHORT).show();
-                imageTagViewGroup.removeTagChild(index);
+                Toast.makeText(MainActivity.this, "startAnim " + index, Toast.LENGTH_SHORT).show();
+//                imageTagViewGroup.removeTagChild(index);
+                imageTagViewGroup.startAnim();
             }
         });
     }

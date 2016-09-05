@@ -31,7 +31,7 @@ public class TagFactor {
 
     public int mCircleRadius = 4;//圆形的半径
     public int mCircleColor = Color.WHITE;
-    public int mOutCircleColor = 0x80000000;
+    public int mOutCircleColor = 0x4D000000;
     public int mOutCircleRadius = 8;//外部圆形半径
 
     public int mLineColor = Color.WHITE;

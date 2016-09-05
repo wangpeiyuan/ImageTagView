@@ -1,5 +1,9 @@
 package com.wpy.imagetagview.tag;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -9,12 +13,13 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.TextView;
 
 import java.util.List;
 
 /**
- * 具体标签 Item
+ * 具体标签 Item 包含一个简单的动画实现
  * Created by feiyang on 16/8/31.
  */
 public class TagItem {
@@ -22,19 +27,19 @@ public class TagItem {
 
     private int mCurrentType = TagFactor.TYPE_NONE;//标签的类型
 
-    private TextView[] mTextViews;
-    private Rect[] mTextViewRects;
+    protected TextView[] mTextViews;
+    protected Rect[] mTextViewRects;
 
-    private PointF mCenterPointF = new PointF();
+    protected PointF mCenterPointF = new PointF();
 
-    private Path mLinePath;
+    protected Path mLinePath;
 
-    private TagFactor mFactor;
+    protected TagFactor mFactor;
 
     //用来判断点击区间
-    private Rect mTextRect;//文字的区间
-    private Rect mCircleRect;//圆点的区间  有一定的扩大
-    private Rect mTagRect;//整个标签的区域 包含文字和圆点
+    protected Rect mTextRect;//文字的区间
+    protected Rect mCircleRect;//圆点的区间  有一定的扩大
+    protected Rect mTagRect;//整个标签的区域 包含文字和圆点
 
     public TagItem(TagFactor factor) {
         mFactor = factor;
@@ -579,8 +584,74 @@ public class TagItem {
         //绘制内圆
         mFactor.mCirclePaint.setColor(mFactor.mCircleColor);
         canvas.drawCircle(mCenterPointF.x, mCenterPointF.y, mFactor.mCircleRadius, mFactor.mCirclePaint);
+        if (isAnimStart) {
+            drawAnim(canvas);
+        }
     }
 
+    private void drawAnim(Canvas canvas) {
+        mFactor.mCirclePaint.setColor(mFactor.mCircleColor);
+        mFactor.mCirclePaint.setAlpha(mColorAlpha);
+        canvas.drawCircle(mCenterPointF.x, mCenterPointF.y, mFactor.mCircleRadius * mScale, mFactor.mCirclePaint);
+    }
+
+    protected AnimatorSet mAnimatorSet;
+    private float mScale;
+    private int mColorAlpha;
+    protected boolean isAnimStart = false;
+
+    public void startAnim(final ViewGroup viewGroup) {
+        if (mAnimatorSet == null) {
+            ValueAnimator circleScaleValueAnimator = ValueAnimator.ofFloat(3f, 5f);
+            circleScaleValueAnimator.setRepeatMode(ValueAnimator.RESTART);
+            circleScaleValueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            circleScaleValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    mScale = (float) animation.getAnimatedValue();
+                    viewGroup.postInvalidate();
+                }
+            });
+
+            ValueAnimator circleAlphaValueAnimator = ValueAnimator.ofInt(60, 0);
+            circleAlphaValueAnimator.setRepeatMode(ValueAnimator.RESTART);
+            circleAlphaValueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            circleAlphaValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    mColorAlpha = (int) animation.getAnimatedValue();
+                    viewGroup.postInvalidate();
+                }
+            });
+
+            mAnimatorSet = new AnimatorSet();
+            mAnimatorSet.setDuration(1700);
+            mAnimatorSet.setStartDelay((long) (2000 + (Math.random() * 800)));
+            mAnimatorSet.setInterpolator(new DecelerateInterpolator(1.3f));
+            mAnimatorSet.play(circleScaleValueAnimator).with(circleAlphaValueAnimator).after(1000);
+            mAnimatorSet.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    super.onAnimationCancel(animation);
+                    isAnimStart = false;
+                }
+
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    isAnimStart = true;
+                }
+            });
+        }
+        mAnimatorSet.start();
+    }
+
+    public void stopAnim() {
+        if (mAnimatorSet != null) {
+            mAnimatorSet.end();
+            mAnimatorSet.cancel();
+        }
+    }
 
     public void addTags(ViewGroup viewGroup, PointF centerPointF, List<String> tagContents) {
         addTags(viewGroup, centerPointF, tagContents, TagFactor.TYPE_NONE);

@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 图片标签  另一种实现方式
- * todo 标签动画
+ * 图片标签
  * Created by feiyang on 16/8/17.
  */
 public class ImageTagViewGroup extends ViewGroup {
@@ -21,10 +20,10 @@ public class ImageTagViewGroup extends ViewGroup {
     protected TagFactor mTagFactor;
     protected List<TagItem> mTagItems;
 
-    private GestureDetector mGestureDetector;
+    protected GestureDetector mGestureDetector;
     protected TagItem mCurrentClickTagItem = null;
-    private boolean mCanTouch = true;
-    private TagGroupClickListener mTagGroupClickListener;
+    protected boolean mCanTouch = true;
+    protected TagGroupClickListener mTagGroupClickListener;
 
     public ImageTagViewGroup(Context context) {
         this(context, null);
@@ -121,6 +120,18 @@ public class ImageTagViewGroup extends ViewGroup {
             tagItem.removeTagView(ImageTagViewGroup.this);
         }
         mTagItems.clear();
+    }
+
+    public void startAnim() {
+        for (TagItem tagItem : mTagItems) {
+            tagItem.startAnim(ImageTagViewGroup.this);
+        }
+    }
+
+    public void stopAnim() {
+        for (TagItem tagItem : mTagItems) {
+            tagItem.stopAnim();
+        }
     }
 
     /**
