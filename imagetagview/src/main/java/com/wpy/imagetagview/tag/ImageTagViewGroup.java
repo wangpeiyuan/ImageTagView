@@ -3,6 +3,7 @@ package com.wpy.imagetagview.tag;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -49,23 +50,24 @@ public class ImageTagViewGroup extends ViewGroup {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (isEmpty()) return;
-        getDrawingRect(mTagFactor.mViewGroupRect);
-//        Log.d(TAG, "onMeasure: " + mTagFactor.mViewGroupRect.toString());
-
         measureChildren(widthMeasureSpec, heightMeasureSpec);
+    }
 
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        getDrawingRect(mTagFactor.mViewGroupRect);
+        Log.d(TAG, "onSizeChanged: " + mTagFactor.mViewGroupRect.toString());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        if (isEmpty() || isHeightEnough()) return;
         for (TagItem tagItem : mTagItems) {
             if (tagItem.isEmpty()) continue;
             tagItem.checkCenterBorder();
             tagItem.checkAndSelectTypeWhenNone();
             tagItem.setTextViewRectAndPath();
-        }
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        if (isEmpty()) return;
-        for (TagItem tagItem : mTagItems) {
             tagItem.onLayout();
         }
     }
@@ -81,6 +83,10 @@ public class ImageTagViewGroup extends ViewGroup {
 
     private boolean isEmpty() {
         return mTagItems == null || mTagItems.isEmpty();
+    }
+
+    private boolean isHeightEnough() {
+        return mTagFactor.mViewGroupRect.height() <= 0;
     }
 
     public void addTags(List<TagContent> tagContents) {
