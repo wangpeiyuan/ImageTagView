@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ImageTagViewGroup">
+        <attr name="circleRadius"
+            format="dimension|reference"/>
+        <attr name="circleColor"
+            format="color|reference"/>
+        <attr name="outCircleRadius"
+            format="reference|dimension"/>
+        <attr name="outCircleColor"
+            format="color|reference"/>
+        <attr name="lineColor"
+            format="color|reference"/>
+        <attr name="lineWidth"
+            format="dimension|reference"/>
+        <attr name="lineStrokeWidth"
+            format="dimension|reference"/>
+        <attr name="textSize"
+            format="dimension|reference"/>
+        <attr name="textColor"
+            format="color|reference"/>
+        <attr name="textLineSpacingExtra"
+            format="dimension|reference"/>
+        <attr name="textShadowColor"
+            format="color|reference"/>
+        <attr name="textLinePadding"
+            format="dimension|reference"/>
+        <attr name="textLineSpacing"
+            format="dimension|reference"/>
+    </declare-styleable>
+</resources>

@@ -1,10 +1,12 @@
 package com.wpy.imagetagview.tag;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-
+import android.util.AttributeSet;
+import com.wpy.imagetagview.R;
 import com.wpy.imagetagview.util.TagLocalDisplay;
 
 /**
@@ -50,13 +52,15 @@ public class TagFactor {
 
     private Context mContext;
 
-    public TagFactor(Context context) {
+
+    public TagFactor(Context context, AttributeSet attrs) {
         mContext = context;
-        init();
+        init(attrs);
     }
 
-    private void init() {
-        initDimension();
+
+    private void init(AttributeSet attrs) {
+        initTypedArray(attrs);
         mViewGroupRect = new Rect();
 
         mCirclePaint = new Paint();
@@ -70,21 +74,49 @@ public class TagFactor {
         mLinePaint.setShadowLayer(1f, 0, 0, mLineShadowColor);
     }
 
-    private void initDimension() {
-        mCircleRadius = TagLocalDisplay.dp2px(mContext, mCircleRadius);
-        mOutCircleRadius = TagLocalDisplay.dp2px(mContext, mOutCircleRadius);
-        mLineWidth = TagLocalDisplay.dp2px(mContext, mLineWidth);
-        mLineStrokeWidth = TagLocalDisplay.dp2px(mContext, mLineStrokeWidth);
+
+    private void initTypedArray(AttributeSet attrs) {
+        TypedArray array = mContext.obtainStyledAttributes(attrs, R.styleable.ImageTagViewGroup, 0,
+            0);
+        mCircleRadius = array.getDimensionPixelSize(R.styleable.ImageTagViewGroup_circleRadius,
+            TagLocalDisplay.dp2px(mContext, mCircleRadius));
+        mCircleColor = array.getColor(R.styleable.ImageTagViewGroup_circleColor, Color.WHITE);
+        mOutCircleRadius = array.getDimensionPixelSize(
+            R.styleable.ImageTagViewGroup_outCircleRadius,
+            TagLocalDisplay.dp2px(mContext, mOutCircleRadius));
+        mOutCircleColor = array.getColor(R.styleable.ImageTagViewGroup_outCircleColor,
+            mOutCircleColor);
+
+        mLineColor = array.getColor(R.styleable.ImageTagViewGroup_lineColor,
+            mLineColor);
+        mLineWidth = array.getDimensionPixelSize(R.styleable.ImageTagViewGroup_lineWidth,
+            TagLocalDisplay.dp2px(mContext, mLineWidth));
+        mLineStrokeWidth = array.getDimensionPixelSize(
+            R.styleable.ImageTagViewGroup_lineStrokeWidth,
+            TagLocalDisplay.dp2px(mContext, mLineStrokeWidth));
         mLineRadiusWidth = TagLocalDisplay.dp2px(mContext, mLineRadiusWidth);
-        mTextLinePadding = TagLocalDisplay.dp2px(mContext, mTextLinePadding);
-        mTextLineSpacing = TagLocalDisplay.dp2px(mContext, mTextLineSpacing);
+
+        mTextSize = array.getDimension(R.styleable.ImageTagViewGroup_textSize, mTextSize);
+        mTextColor = array.getColor(R.styleable.ImageTagViewGroup_textColor, Color.WHITE);
+        mTextLineSpacingExtra = array.getDimension(
+            R.styleable.ImageTagViewGroup_textLineSpacingExtra, mTextLineSpacingExtra);
+        mTextShadowColor = array.getColor(R.styleable.ImageTagViewGroup_textShadowColor,
+            mTextShadowColor);
+        mTextLinePadding = array.getDimensionPixelSize(
+            R.styleable.ImageTagViewGroup_textLinePadding,
+            TagLocalDisplay.dp2px(mContext, mTextLinePadding));
+        mTextLineSpacing = array.getDimensionPixelSize(
+            R.styleable.ImageTagViewGroup_textLineSpacing,
+            TagLocalDisplay.dp2px(mContext, mTextLineSpacing));
+        array.recycle();
     }
+
 
     public void checkType(int type) {
         if (TagFactor.TYPE_NONE != type &&
-                TagFactor.TYPE_ONE_LEFT != type && TagFactor.TYPE_ONE_RIGHT != type &&
-                TagFactor.TYPE_MORE_LEFT_TOP != type && TagFactor.TYPE_MORE_LEFT_BOTTOM != type &&
-                TagFactor.TYPE_MORE_RIGHT_TOP != type && TagFactor.TYPE_MORE_RIGHT_BOTTOM != type) {
+            TagFactor.TYPE_ONE_LEFT != type && TagFactor.TYPE_ONE_RIGHT != type &&
+            TagFactor.TYPE_MORE_LEFT_TOP != type && TagFactor.TYPE_MORE_LEFT_BOTTOM != type &&
+            TagFactor.TYPE_MORE_RIGHT_TOP != type && TagFactor.TYPE_MORE_RIGHT_BOTTOM != type) {
             throw new IllegalArgumentException("This type is not supported.");
         }
     }
