@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -21,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:src="@mipmap/img"/>
+            android:src="@mipmap/img_1"/>
     </com.wpy.imagetagview.tag.other.SetTagGroupView>
 
     <com.wpy.imagetagview.tag.ImageTagViewGroup
@@ -30,5 +29,5 @@
         android:layout_height="0dp"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:layout_weight="1"
-        android:background="@color/colorPrimary"/>
+        android:background="@mipmap/img"/>
 </LinearLayout>
